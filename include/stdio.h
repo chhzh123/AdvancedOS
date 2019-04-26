@@ -5,46 +5,34 @@
 #ifndef STDIO_H
 #define STDIO_H
 
-#define VIDEO_ADDRESS 0xb8000
-#define MAX_ROWS 25
-#define MAX_COLS 80
-// Attribute byte for our default colour scheme.
-#define WHITE_ON_BLACK 0x07
+#include "io.h"
+#include "scancode.h"
+#include "keyboard.h"
+
 // Screen device I/O ports
 #define REG_SCREEN_CTRL 0x3D4
 #define REG_SCREEN_DATA 0x3D5
 
-unsigned char port_byte_in(unsigned short port){
-	unsigned char result;
-	__asm__ ("in %% dx, %% al"
-			:"=a"(result)
-			:"d"(port)
-			);
-	return result;
-}
+enum Color{
+	BLACK = 0,
+	BLUE = 1,
+	GREEN = 2,
+	CYAN = 3,
+	RED = 4,
+	MAGENTA = 5,
+	BROWN = 6,
+	LIGHT_GREY = 7,
+	DARK_GREY = 8,
+	LIGHT_BLUE = 9,
+	LIGHT_GREEN = 10, //a
+	LIGHT_CYAN = 11, // b
+	LIGHT_RED = 12, // c
+	LIGHT_MAGENTA = 13, // d
+	LIGHT_BROWN = 14, // e
+	WHITE = 15 // f
+};
 
-void port_byte_out(unsigned short port, unsigned char data){
-	__asm__ ("out %% al, %% dx"
-			:
-			:"a"(data), "d"(port)
-			);
-}
-
-unsigned short port_word_in(unsigned short port){
-	unsigned short result;
-	__asm__ ("in %% dx, %% ax"
-			:"=a"(result)
-			:"d"(port)
-			);
-	return result;
-}
-
-void port_word_out(unsigned short port, unsigned short data){
-	__asm__ ("out %% ax, %% dx"
-			:
-			:"a"(data), "d"(port)
-			);
-}
+int ATTRIBUTE_VAL = 0x0007;
 
 /* Copy bytes from one place to another */
 void memory_copy(char* source, char* dest, int no_bytes) {
@@ -52,6 +40,16 @@ void memory_copy(char* source, char* dest, int no_bytes) {
 	for (i = 0; i < no_bytes; i++) {
 		*(dest + i) = *(source + i);
 	}
+}
+
+int get_color(enum Color fg, enum Color bg)
+{
+	return (fg | (bg << 4));
+}
+
+void set_color(enum Color fg, enum Color bg)
+{
+	ATTRIBUTE_VAL = (fg | (bg << 4));
 }
 
 int get_screen_offset(int col,int row)
@@ -87,6 +85,40 @@ int get_cursor() {
 	return offset * 2;
 }
 
+// unsigned char read_scan_code()
+// {
+// 	return port_byte_in(REG_KEYBOARD_DATA);
+// }
+
+// char getchar()
+// {
+// 	unsigned char scancode = read_scan_code();   /* Read in the scan code from port 60 */
+
+// 	/* Reset the control port to read in the next character */
+// 	unsigned char cv = port_byte_in(REG_SCREEN_CTRL);   /* Read the value in the control port */
+
+// 	/* Reset to read in next character by switching the 7th bit on
+// 	 * and off on port 61
+// 	 */
+// 	port_byte_out(0x61, cv | 0x80); 
+// 	port_byte_out(0x61, cv); 
+
+// 	/* 
+// 	 *   convert the scan code to ASCII
+// 	 */
+// 	char c = asccode[scancode][0];
+// 	/*
+// 	 *  Send general end of interrupt to external interrupt controller.
+// 	 *  The interrupt controller is a device external to the CPU, and
+// 	 *  mediates incoming interrupts.   Until the CPU "clears" the
+// 	 *  controller, no further external interrupts will be received.
+// 	 *  This "port_byte_out" command will clear the controller.
+// 	 */
+// 	port_byte_out(0x20, 0x20);
+
+// 	return c;
+// }
+
 /* Advance the text cursor, scrolling the video buffer if necessary */
 int handle_scrolling(int cursor_offset) {
 	// If the cursor is within the screen, return it unmodified
@@ -112,12 +144,12 @@ int handle_scrolling(int cursor_offset) {
 }
 
 /* Print a char on the screen at col, row, or at cursor position */
-void print_char(char character, int col, int row, char attribute_byte) {
+void putchar(char character, int col, int row, char attribute_byte) {
 	/* Create a byte (char) pointer to the start of video memory */
 	unsigned char* vidmem = (unsigned char*) VIDEO_ADDRESS;
 	/* If attribute byte is zero, assume the default style */
 	if (!attribute_byte) {
-		attribute_byte = WHITE_ON_BLACK;
+		attribute_byte = ATTRIBUTE_VAL;
 	}
 	/* Get the video memory offset for the screen location */
 	int offset;
@@ -136,6 +168,11 @@ void print_char(char character, int col, int row, char attribute_byte) {
 		offset = get_screen_offset(79, rows);
 	// Otherwise, write the character and its attribute byte to
 	// video memory at our calculated offset
+	} else if (character == '\b') {
+		offset -= 2;
+		vidmem[offset] = ' ';
+		vidmem[offset+1] = attribute_byte;
+		offset -= 2;
 	} else {
 		vidmem[offset] = character;
 		vidmem[offset+1] = attribute_byte;
@@ -150,7 +187,7 @@ void print_char(char character, int col, int row, char attribute_byte) {
 	set_cursor(offset);
 }
 
-void print_at(char* message, int col, int row) {
+void print_at(const char* message, int col, int row) {
 	// Update the cursor if col and row not negative
 	if(col >= 0 && row >= 0) {
 		set_cursor(get_screen_offset(col, row));
@@ -158,12 +195,16 @@ void print_at(char* message, int col, int row) {
 	// Loop through each char of the message and print it
 	int i = 0;
 	while(message[i] != 0) {
-		print_char(message[i++], col, row, WHITE_ON_BLACK);
+		putchar(message[i++], col, row, ATTRIBUTE_VAL);
 	}
 }
 
-void print(char* message) {
+void print(const char* message) {
 	print_at(message, -1, -1);
+}
+
+void print_char(const char c) {
+	putchar(c, -1, -1, ATTRIBUTE_VAL);
 }
 
 void clear_screen() {
@@ -172,11 +213,34 @@ void clear_screen() {
 	/* Loop through video memory and write blank characters */
 	for(row = 0; row < MAX_ROWS; row ++) {
 		for(col = 0; col < MAX_COLS; col ++) {
-			print_char(' ', col, row, WHITE_ON_BLACK);
+			putchar(' ', col, row, ATTRIBUTE_VAL);
 		}
 	}
 	// Move the cursor back to the top left
 	set_cursor(get_screen_offset(0, 0));
+}
+
+void getline(char* res)
+{
+	int i = 0;
+	while(1){
+		char ch = getchar();
+		if (ch == '\b'){
+			if (i == 0)
+				continue;
+			res[--i] = '\0';
+			set_cursor(get_cursor()-2);
+			print_char(' ');
+			set_cursor(get_cursor()-2);
+			continue;
+		}
+		res[i++] = ch;
+		print_char(ch);
+		if (ch == '\r' || ch == '\n'){
+			res[--i] = '\0';
+			break;
+		}
+	}
 }
 
 #endif // STDIO_H

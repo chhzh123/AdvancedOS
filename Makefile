@@ -1,7 +1,7 @@
 CC = gcc
-CCFLAGS := -c -march=i386 -nostdlib -ffreestanding -Wall -Wextra
+CCFLAGS := -c -march=i386 -nostdlib -ffreestanding -Wint-conversion
 CCFLAGS += -Iinclude -lgcc -fno-PIE -nostartfiles
-CCFLAGS += -m32
+CCFLAGS += -m32 -masm=intel
 
 AS = nasm
 ASFLAGS = -felf32
