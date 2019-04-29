@@ -8,6 +8,7 @@
 
 void main () {
 	idt_init();
+	kb_init();
 	clear_screen();
 	terminal();
 }

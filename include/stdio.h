@@ -8,6 +8,8 @@
 #include "io.h"
 #include "scancode.h"
 #include "keyboard.h"
+#include "string.h"
+#include <stdarg.h>
 
 // Screen device I/O ports
 #define REG_SCREEN_CTRL 0x3D4
@@ -207,6 +209,12 @@ void print_char(const char c) {
 	putchar(c, -1, -1, ATTRIBUTE_VAL);
 }
 
+void print_int(const int x) {
+	char str[MAX_BUF_LEN];
+	itoa(x,str);
+	print(str);
+}
+
 void clear_screen() {
 	int row = 0;
 	int col = 0;
@@ -241,6 +249,171 @@ void getline(char* res)
 			break;
 		}
 	}
+}
+
+int read_int(const char* s, int* readNum) {
+    int sign = 1;
+    int cnt = 0;
+    if (*s == '-') {
+        sign = -1;
+        s++;
+        cnt++;
+    }
+    int ret = 0;
+    while (*s && *s >= '0' && *s <= '9') {
+        ret = ret * 10 + (*s - '0');
+        s++;
+        cnt++;
+    }
+    *readNum = (int) ret * sign;
+    return cnt;
+}
+
+void printf(const char* format, ...){
+	int narg = 0;
+	int i = 0;
+	int padding = 0;
+	for (i = 0; format[i]; i++)
+		if (format[i] == '%')
+			narg++;
+
+	va_list valist;
+	va_start(valist, format);
+
+	for (i = 0; format[i]; ++i) {
+		int digitLength = 0;
+		if (format[i] == '%') {
+			if ((format[i+1] >= '0' && format[i+1] <= '9') || (format[i+1] == '-')) {
+				digitLength = read_int(format + i + 1,&padding);
+			}
+			if (format[i + digitLength + 1] == 'd') {
+				int data = va_arg(valist, int);
+				print_int(data);
+			} else if (format[i+ digitLength + 1] == 'c') {
+				int c = va_arg(valist, int); // va_arg uses int instead of char
+				print_char(c);
+			} else if (format[i + digitLength + 1] == 's') {
+				char* str = va_arg(valist, char*);
+				print(str);
+			} else if (format[i + digitLength + 1] == '%'){
+				print_char('%');
+			}
+			i += 1 + digitLength;
+			continue;
+		} else if (format[i] == '\n' || format[i] == '\r') {
+			print_char('\n');
+		} else {
+			print_char(format[i]);
+		}
+	}
+
+	va_end(valist);
+}
+
+// sscanf("info:abc num:123","info:%s num:%d",str,num)
+void sscanf(const char* s, const char* format, ...) {
+	int narg = 0;
+	int i = 0;
+	for (i = 0; format[i]; i++)
+		if (format[i] == '%')
+			narg++;
+
+	va_list valist;
+	va_start(valist, format);
+
+	i = 0;
+	int s_i = 0;
+	int offset;
+	for (i = 0; format[i]; ++i) {
+		if (format[i] == '%') {
+			if (format[i + 1] == 'c') {
+				char* pc = va_arg(valist, char*);
+				*pc = s[s_i];
+				offset = 1;
+			} else if (format[i + 1] == 'd') {
+				int* pd = va_arg(valist, int*);
+				offset = read_int(s+s_i, pd);
+			}
+			else if (format[i + 1] == 's') {
+				char* pstr = va_arg(valist, char*);
+				while (s[s_i] && !isspace(s[s_i])) {
+					*pstr = s[s_i];
+					pstr++;
+					s_i++;
+				}
+				offset = 0; // s_i has been changed
+				*pstr = '\0';
+			}
+			i += 1;
+			s_i += offset;
+		} else { // normal match
+			if (format[i] == ' ') {
+				while (isspace(s[s_i])) {
+					s_i++;
+				}
+			} else if (format[i] == s[s_i]) {
+				s_i++;
+			} else {
+				// printf("not same, %c and %c\n", format[i], s[s_i]);
+			}
+		}
+	}
+
+	va_end(valist);
+}
+
+void scanf(const char* format, ...) {
+	int narg = 0;
+	int i = 0;
+	for (i = 0; format[i]; i++)
+		if (format[i] == '%')
+			narg++;
+
+	va_list valist;
+	va_start(valist, format);
+
+	char s[MAX_BUF_LEN];
+	getline(s);
+
+	i = 0;
+	int s_i = 0;
+	int offset;
+	for (i = 0; format[i]; ++i) {
+		if (format[i] == '%') {
+			if (format[i + 1] == 'c') {
+				char* pc = va_arg(valist, char*);
+				*pc = s[s_i];
+				offset = 1;
+			} else if (format[i + 1] == 'd') {
+				int* pd = va_arg(valist, int*);
+				offset = read_int(s+s_i, pd);
+			}
+			else if (format[i + 1] == 's') {
+				char* pstr = va_arg(valist, char*);
+				while (s[s_i] && !isspace(s[s_i])) {
+					*pstr = s[s_i];
+					pstr++;
+					s_i++;
+				}
+				offset = 0; // s_i has been changed
+				*pstr = '\0';
+			}
+			i += 1;
+			s_i += offset;
+		} else { // normal match
+			if (format[i] == ' ') {
+				while (isspace(s[s_i])) {
+					s_i++;
+				}
+			} else if (format[i] == s[s_i]) {
+				s_i++;
+			} else {
+				// printf("not same, %c and %c\n", format[i], s[s_i]);
+			}
+		}
+	}
+
+	va_end(valist);
 }
 
 #endif // STDIO_H

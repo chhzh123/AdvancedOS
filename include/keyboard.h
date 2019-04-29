@@ -8,6 +8,8 @@
 #ifndef KEYBOARD_H
 #define KEYBOARD_H
 
+#include <stdbool.h>
+
 #include "io.h"
 // unsigned char port_byte_in(unsigned short port)
 // void port_byte_out(unsigned short port, unsigned char data)
@@ -20,22 +22,12 @@
 #define KERNEL_CODE_SEGMENT_OFFSET 0x08
 
 #define MAX_BUF_LEN 1000
+#define INVALID_KB_CHAR 0
 
 extern void load_idt(unsigned long *idt_ptr);
 extern void keyboard_handler(void);
 
-struct kb_char_struct {
-	unsigned short flag;
-	char c;
-};
-
-struct kb_array {
-	int n; // # of chars
-	char arr[MAX_BUF_LEN];
-};
-
-struct kb_char_struct kb_char;
-struct kb_array kb_buf;
+static char kb_char;
 
 struct IDT_entry {
 	unsigned short int offset_lowerbits;
@@ -114,12 +106,11 @@ void keyboard_handler_main(void)
 	/* Lowest bit of status will be set if buffer is not empty */
 	if (status & 0x01) {
 		keycode = port_byte_in(KEYBOARD_DATA_PORT);
-		if(keycode < 0)
+		if (keycode < 0)
 			return;
 
 		char ascii = asccode[(unsigned char) keycode][0];
-		kb_char.flag = 1;
-		kb_char.c = ascii;
+		kb_char = ascii;
 	}
 }
 
@@ -136,12 +127,12 @@ void kb_close(void)
 
 char getchar()
 {
-	kb_char.flag = 0;
-	kb_init();
-	while (!kb_char.flag);
-	kb_close();
-	kb_char.flag = 0;
-	return kb_char.c;
+	char c = INVALID_KB_CHAR;
+	kb_char = INVALID_KB_CHAR;
+	while (c == INVALID_KB_CHAR)
+		c = kb_char;
+	kb_char = INVALID_KB_CHAR;
+	return c;
 }
 
 #endif // KEYBOARD_H

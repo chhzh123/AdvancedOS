@@ -8,11 +8,12 @@
 #define TERMINAL_H
 
 #include "stdio.h"
+#include "string.h"
 
 const char* PROMPT_INFO = "chzos> ";
 const char* HELLO_INFO = "Welcome to CHZOS!\n";
 const char* HELP_INFO =
-"CHZ OS Shell version 0.1\n\
+"CHZ OS Shell version 0.5\n\
 These shell commands are defined internally. Type 'help' to see this list.\n\
 \n\
  help       -- Show this list\n\
@@ -23,15 +24,12 @@ These shell commands are defined internally. Type 'help' to see this list.\n\
  clr        -- Clear the screen\n\
  exit       -- Exit OS\n";
 
-// void command_not_found(char* str)
-// {
-// 	char* newline = "\n";
-// 	if (strcmp(str,newline) == 0 || strlen(str) == 0)
-// 		return;
-// 	strcat(str,CMD_NOT_FOUND);
-// 	puts(str);
-// 	puts(newline);
-// }
+void command_not_found(char* str)
+{
+	if (strcmp(str,"\n") == 0 || strlen(str) == 0)
+		return;
+	printf("%s: command not found\n",str);
+}
 
 void put_prompt()
 {
@@ -45,19 +43,18 @@ void terminal()
 	set_color(CYAN,BLACK);
 	print(HELLO_INFO);
 	set_color(WHITE,BLACK);
-	while (1){
+	while (1) {
 		put_prompt();
 		char str[MAX_BUF_LEN];
 		getline(str);
-		while (1) {}
-		// if (strcmp(str,"help") == 0)
-		// 	print(HELP_INFO);
-		// else if (strcmp(str,SHOW_STR) == 0)
-		// 	show_prg_info();
-		// else if (strcmp(str,EXIT_STR) == 0)
-		// 	break;
-		// else if (strcmp(str,CLR_STR) == 0)
-		// 	clear();
+		if (strcmp(str,"help") == 0)
+			print(HELP_INFO);
+		else if (strcmp(str,"exit") == 0)
+			break;
+		else if (strcmp(str,"clr") == 0)
+			clear_screen();
+		else
+			command_not_found(str);
 		// else if (strcmp(str,INTER_STR) == 0)
 		// 	interpreter();
 		// else if (strlen(str) >= 4){
@@ -74,8 +71,6 @@ void terminal()
 		// 		clear();
 		// 	} else
 		// 		command_not_found(str);
-		// } else
-		// 	command_not_found(str);
 	}
 }
 
