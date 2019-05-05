@@ -5,6 +5,7 @@
 /****** kernel.c ******/
 #include "stdio.h"
 #include "idt.h"
+#include "dma.h"
 #include "terminal.h"
 // #include "flpydsk.h"
 

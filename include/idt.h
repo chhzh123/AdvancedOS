@@ -64,6 +64,13 @@ int install_ir (uint32_t i, uint16_t type_attr, uint16_t selector, uint64_t irq)
 	return	0;
 }
 
+// sets new interrupt vector
+void setvect (int intno, int type_attr, uint64_t vect) {
+
+	// install interrupt handler! This overwrites prev interrupt descriptor
+	install_ir (intno, type_attr, KERNEL_CODE_SEGMENT_OFFSET, vect);
+}
+
 extern void load_idt(unsigned long *idt_ptr);
 
 // initialize basic idt
@@ -86,11 +93,5 @@ int idt_init() {
 	return 0;
 }
 
-// sets new interrupt vector
-void setvect (int intno, int type_attr, uint64_t vect) {
-
-	// install interrupt handler! This overwrites prev interrupt descriptor
-	install_ir (intno, type_attr, KERNEL_CODE_SEGMENT_OFFSET, vect);
-}
 
 #endif // IDT_H
