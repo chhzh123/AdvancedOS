@@ -38,7 +38,7 @@
 load_kernel:
 	show_string_rm MSG_LOAD_KERNEL, 3, 0
 	mov bx, KERNEL_OFFSET  ; Setup parameters for our disk_load routine
-	mov dh, 15             ; load the first 15 sectors
+	mov dh, 40             ; load the first n sectors
 	call disk_load
 	ret
 

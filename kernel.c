@@ -4,10 +4,13 @@
 
 /****** kernel.c ******/
 #include "stdio.h"
+#include "idt.h"
 #include "terminal.h"
+// #include "flpydsk.h"
 
 void main () {
 	idt_init();
+	pic_init();
 	kb_init();
 	clear_screen();
 	terminal();
