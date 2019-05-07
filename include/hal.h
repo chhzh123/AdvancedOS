@@ -7,18 +7,20 @@
 #ifndef HAL_H
 #define HAL_H
 
+#include "gdt.h"
 #include "idt.h"
 #include "exception.h"
 #include "pic.h"
 #include "keyboard.h"
 #include "pit.h"
 #include "flpydsk.h"
+// #include "tss.h"
 
 void hal_initialize(){
 	/*
-	 * Global Description Table (GDT) has been initialized in switch_to_pm.asm
+	 * Global Description Table (GDT) initialization
 	 */
-
+	gdt_init(); // re-implement for completeness
 
 	/*
 	 * Interrupt Description Table (IDT) initialization
@@ -68,6 +70,11 @@ void hal_initialize(){
 	 */
 	flpydsk_set_working_drive(0);
 	flpydsk_init(38);
+
+	/*
+	 * task state segment (TSS) initialization
+	 */
+	// tss_init();
 }
 
 void generate_interrupt(int n){

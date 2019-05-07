@@ -7,9 +7,16 @@
 [ extern main ] ; Declate that we will be referencing the external symbol 'main',
                 ; so the linker can substitute the final address
 [ global _start ]
+[ global load_gdt ]
 
 _start:
 	call main   ; invoke main() in C kernel
 	jmp $       ; Hang forever when we return from the kernel
 
 %include "interrupt.asm"
+; %include "user.asm"
+
+load_gdt:
+	mov edx, [ esp + 4 ]
+	lidt [ edx ]        ; load global description table (GDT)
+	ret

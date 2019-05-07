@@ -20,7 +20,7 @@ gdt_code:                      ; the code segment descriptor
 	db 11001111b               ; 2nd flags , Limit (bits 16 -19)
 	db 0x0                     ; Base (bits 24 -31)
 
-gdt_data: ; the data segment descriptor
+gdt_data: ; the data segment descriptor (Offset: 0x10)
 	; Same as code segment except for the type flags:
 	; type flags: (code) 0 (expand down) 0 (writable) 1 (accessed) 0 -> 0010 b
 	dw 0xffff                  ; Limit (bits 0 -15)
@@ -30,17 +30,35 @@ gdt_data: ; the data segment descriptor
 	db 11001111b               ; 2nd flags , Limit (bits 16 -19)
 	db 0x0                     ; Base (bits 24 -31)
 
+user_code: ; User Space code (Offset: 24 (0x18) bytes)
+	dw 0xffff                  ; limit low
+	dw 0x0                     ; base low
+	db 0x0                     ; base middle
+	db 11111010b               ; access - Notice that bits 5 and 6 (privilege level) are 11b for Ring 3
+	db 11001111b               ; granularity
+	db 0x0                     ; base high
+ 
+user_data: ; User Space data (Offset: 32 (0x20) bytes
+	dw 0xffff                  ; limit low (Same as code)10:56 AM 7/8/2007
+	dw 0x0                     ; base low
+	db 0x0                     ; base middle
+	db 11110010b               ; access - Notice that bits 5 and 6 (privilege level) are 11b for Ring 3
+	db 11001111b               ; granularity
+	db 0x0                     ; base high
+
 gdt_end: ; The reason for putting a label at the end of the
 	; GDT is so we can have the assembler calculate
 	; the size of the GDT for the GDT decriptor (below) 
 	; GDT descriptior
-gdt_descriptor:
+gdt_descriptor:                ; Pointer to the GDT
 	dw gdt_end - gdt_start - 1 ; Size of our GDT , always less one of the true size
 	dd gdt_start               ; Start address of our GDT
 	; Define some handy constants for the GDT segment descriptor offsets , which
 	; are what segment registers must contain when in protected mode. For example ,
-	; when we set DS = 0 x10 in PM , the CPU knows that we mean it to use the
-	; segment described at offset 0 x10 (i.e. 16 bytes)  in our GDT , which in our
-	; case is the DATA segment (0 x0 -> NULL ; 0x08 -> CODE ; 0 x10 -> DATA) 
+	; when we set DS = 0x10 in PM , the CPU knows that we mean it to use the
+	; segment described at offset 0x10 (i.e. 16 bytes)  in our GDT , which in our
+	; case is the DATA segment (0x0 -> NULL ; 0x08 -> CODE ; 0x10 -> DATA) 
 	CODE_SEG equ gdt_code - gdt_start
 	DATA_SEG equ gdt_data - gdt_start
+	USER_CODE_SEG equ user_code - gdt_start
+	USER_DATA_SEG equ user_data - gdt_start
