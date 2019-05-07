@@ -36,7 +36,7 @@
 [ bits 16 ]
 
 load_kernel:
-	show_string_rm MSG_LOAD_KERNEL, 3, 0
+	show_string_rm MSG_LOAD_KERNEL, 1, 0
 	mov bx, KERNEL_OFFSET  ; Setup parameters for our disk_load routine
 	mov dh, 40             ; load the first n sectors
 	call disk_load
@@ -55,7 +55,7 @@ load_kernel:
 ; This is where we arrive after switching to and initialising protected mode
 BEGIN_PM:
 	mov ebx, MSG_PROT_MODE
-	show_string_pm MSG_PROT_MODE, 1, 0
+	show_string_pm MSG_PROT_MODE, 2, 0
 
 	call KERNEL_OFFSET ; Now jump to the address of our loaded
                        ; kernel code, assume the brace position,

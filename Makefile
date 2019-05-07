@@ -13,7 +13,7 @@ BUILD = build
 
 IMG = mydisk.img
 KERNEL = bootloader.bin kernel.bin
-DEBUG = kernel.s
+# DEBUG = kernel.s
 
 all: build programs
 	-rm -f $(IMG)

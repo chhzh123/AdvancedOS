@@ -18,6 +18,7 @@ These shell commands are defined internally. Type 'help' to see this list.\n\
 \n\
  help       -- Show this list\n\
  show       -- Show existing programs\n\
+ tick       -- Show current execution time\n\
  inter      -- Execute the C / Python Interpreter\n\
  exec       -- Execute all the user programs\n\
  exec [num] -- Execute the num-th program\n\
@@ -53,6 +54,8 @@ void terminal()
 			break;
 		else if (strcmp(str,"clr") == 0)
 			clear_screen();
+		else if (strcmp(str,"tick") == 0)
+			printf("%d\n",get_tick_count());
 		else
 			command_not_found(str);
 		// else if (strcmp(str,INTER_STR) == 0)

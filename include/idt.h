@@ -39,9 +39,7 @@ unsigned long idt_ptr[2];
 
 //! default handler to catch unhandled system interrupts.
 static void default_handler () {
-	set_color(RED,BLACK);
-	printf("Error: Unhandled Exception!");
-	set_color(LIGHT_GREY,BLACK);
+	put_error("Error: Unhandled Exception!");
 	for(;;);
 }
 

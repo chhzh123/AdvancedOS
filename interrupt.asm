@@ -4,7 +4,9 @@
 
 [ global load_idt ]
 [ global keyboard_handler ]
+[ global pit_handler ]
 [ extern keyboard_handler_main ]
+[ extern pit_handler_main ]
 
 load_idt:
 	mov edx, [ esp + 4 ]
@@ -15,3 +17,7 @@ load_idt:
 keyboard_handler:
 	call    keyboard_handler_main
 	iretd               ; 32-bit return
+
+pit_handler:
+	call pit_handler_main
+	iretd

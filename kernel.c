@@ -10,7 +10,5 @@
 void main () {
 	hal_initialize();
 	clear_screen();
-	generate_interrupt(1);
-	// printf("%d\n",get_tick_count());
 	terminal();
 }
