@@ -12,8 +12,7 @@
 #include "pic.h"
 #include "keyboard.h"
 #include "pit.h"
-// #include "dma.h"
-// #include "flpydsk.h"
+#include "flpydsk.h"
 
 void hal_initialize(){
 	/*
@@ -67,8 +66,8 @@ void hal_initialize(){
 	/*
 	 * floppy disk initialization
 	 */
-	// flpydsk_set_working_drive(0);
-	// flpydsk_init(38);
+	flpydsk_set_working_drive(0);
+	flpydsk_init(38);
 }
 
 void generate_interrupt(int n){
@@ -80,6 +79,11 @@ void generate_interrupt(int n){
 			:
 			:"a"(n)
 			);
+}
+
+void sleep (int ms) {
+	int ticks = ms + get_tick_count ();
+	while (ticks > get_tick_count ());
 }
 
 #endif // HAL_H

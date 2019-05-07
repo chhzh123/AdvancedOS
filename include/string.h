@@ -93,20 +93,39 @@ void reverse(char* s)
 	}
 }
 
-// K&R
-void itoa(int n, char* s)
-{
-	int i, sign;
-	if ((sign = n) < 0)
-		n = -n;
-	i = 0;
-	do { // generate digits in reverse order
-		s[i++] = n % 10 + '0';
-	} while ((n /= 10) > 0);
-	if (sign < 0)
-		s[i++] = '-';
-	s[i] = '\0';
-	reverse(s);
+char tbuf[32];
+char bchars[] = {'0','1','2','3','4','5','6','7','8','9','A','B','C','D','E','F'};
+
+void itoa(unsigned i, char* buf, unsigned base) {
+    int pos = 0;
+    int opos = 0;
+    int top = 0;
+
+    if (i == 0 || base > 16) {
+        buf[0] = '0';
+        buf[1] = '\0';
+        return;
+    }
+
+    while (i != 0) {
+        tbuf[pos] = bchars[i % base];
+        pos++;
+        i /= base;
+    }
+    top = pos--;
+    for (opos = 0; opos < top; pos--, opos++) {
+        buf[opos] = tbuf[pos];
+    }
+    buf[opos] = 0;
+}
+
+void itoa_s(int i, char* buf, unsigned base) {
+    if (base > 16) return;
+    if (i < 0) {
+        *buf++ = '-';
+        i *= -1;
+    }
+    itoa(i,buf,base);
 }
 
 bool isdigit(char c)

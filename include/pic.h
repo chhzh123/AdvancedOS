@@ -16,7 +16,7 @@
 #define		PIC_IRQ_SERIAL2			3
 #define		PIC_IRQ_SERIAL1			4
 #define		PIC_IRQ_PARALLEL2		5
-#define		PIC_IRQ_DISKETTE		6
+#define		PIC_IRQ_DISKETTE		6 // IMPORTANT!
 #define		PIC_IRQ_PARALLEL1		7
 
 // The following devices use PIC 2 to generate interrupts

@@ -175,9 +175,9 @@ void print_char(const char c) {
 	putchar(c, -1, -1, ATTRIBUTE_VAL);
 }
 
-void print_int(const int x) {
+void print_int(const int x, const int base) {
 	char str[MAX_BUF_LEN];
-	itoa(x,str);
+	itoa(x,str,base);
 	print(str);
 }
 
@@ -254,9 +254,12 @@ void printf(const char* format, ...){
 			if ((format[i+1] >= '0' && format[i+1] <= '9') || (format[i+1] == '-')) {
 				digitLength = read_int(format + i + 1,&padding);
 			}
-			if (format[i + digitLength + 1] == 'd') {
+			if (format[i + digitLength + 1] == 'd' || format[i + digitLength + 1] == 'i') {
 				int data = va_arg(valist, int);
-				print_int(data);
+				print_int(data,10);
+			} else if (format[i + digitLength + 1] == 'x' || format[i + digitLength + 1] == 'X') {
+				int data = va_arg(valist, int);
+				print_int(data,16);
 			} else if (format[i+ digitLength + 1] == 'c') {
 				int c = va_arg(valist, int); // va_arg uses int instead of char
 				print_char(c);
@@ -301,8 +304,7 @@ void sscanf(const char* s, const char* format, ...) {
 			} else if (format[i + 1] == 'd') {
 				int* pd = va_arg(valist, int*);
 				offset = read_int(s+s_i, pd);
-			}
-			else if (format[i + 1] == 's') {
+			} else if (format[i + 1] == 's') {
 				char* pstr = va_arg(valist, char*);
 				while (s[s_i] && !isspace(s[s_i])) {
 					*pstr = s[s_i];
@@ -355,8 +357,7 @@ void scanf(const char* format, ...) {
 			} else if (format[i + 1] == 'd') {
 				int* pd = va_arg(valist, int*);
 				offset = read_int(s+s_i, pd);
-			}
-			else if (format[i + 1] == 's') {
+			} else if (format[i + 1] == 's') {
 				char* pstr = va_arg(valist, char*);
 				while (s[s_i] && !isspace(s[s_i])) {
 					*pstr = s[s_i];

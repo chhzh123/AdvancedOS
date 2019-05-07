@@ -19,6 +19,7 @@ These shell commands are defined internally. Type 'help' to see this list.\n\
  help       -- Show this list\n\
  show       -- Show existing programs\n\
  tick       -- Show current execution time\n\
+ read       -- Read disk and print out\n\
  inter      -- Execute the C / Python Interpreter\n\
  exec       -- Execute all the user programs\n\
  exec [num] -- Execute the num-th program\n\
@@ -39,6 +40,26 @@ void put_prompt()
 	set_color(WHITE,BLACK);
 }
 
+void read_disk(){
+	printf("Please enter the sector number: ");
+	int num;
+	scanf("%d",&num);
+	printf("Reading sector %d...\n", num);
+	uint8_t* sector = flpydsk_read_sector(num);
+	// display sector
+	if (sector != 0) {
+		int i = 0;
+		for (int c = 0; c < 1; c++ ) {
+			for (int j = 0; j < 128; j++)
+				printf ("0x%x ", sector[ i + j ]);
+			i += 128;
+		}
+		printf("\n");
+	}
+	else
+		put_error("Error reading sector from disk");
+}
+
 void terminal()
 {
 	set_color(CYAN,BLACK);
@@ -56,6 +77,8 @@ void terminal()
 			clear_screen();
 		else if (strcmp(str,"tick") == 0)
 			printf("%d\n",get_tick_count());
+		else if (strcmp(str,"read") == 0)
+			read_disk();
 		else
 			command_not_found(str);
 		// else if (strcmp(str,INTER_STR) == 0)
