@@ -384,4 +384,11 @@ void scanf(const char* format, ...) {
 	va_end(valist);
 }
 
+void put_error(char* str)
+{
+	set_color(RED,BLACK);
+	print(str);
+	set_color(WHITE,BLACK);
+}
+
 #endif // STDIO_H
