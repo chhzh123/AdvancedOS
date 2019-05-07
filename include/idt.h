@@ -7,7 +7,7 @@
 #ifndef IDT_H
 #define IDT_H
 
-#include "string.h" // memset
+#include "stdio.h"
 #include <stdint.h>
 
 // i86 defines 256 possible interrupt handlers (0-255)
@@ -39,6 +39,9 @@ unsigned long idt_ptr[2];
 
 //! default handler to catch unhandled system interrupts.
 static void default_handler () {
+	set_color(RED,BLACK);
+	printf("Error: Unhandled Exception!");
+	set_color(LIGHT_GREY,BLACK);
 	for(;;);
 }
 
@@ -65,10 +68,10 @@ int install_ir (uint32_t i, uint16_t type_attr, uint16_t selector, uint64_t irq)
 }
 
 // sets new interrupt vector
-void setvect (int intno, int type_attr, uint64_t vect) {
+void setvect (int intno, uint64_t vect) {
 
 	// install interrupt handler! This overwrites prev interrupt descriptor
-	install_ir (intno, type_attr, KERNEL_CODE_SEGMENT_OFFSET, vect);
+	install_ir (intno, INTERRUPT_GATE, KERNEL_CODE_SEGMENT_OFFSET, vect);
 }
 
 extern void load_idt(unsigned long *idt_ptr);
@@ -81,9 +84,9 @@ int idt_init() {
 
 	// register default handlers
 	for (int i = 0; i < MAX_INTERRUPTS; i++)
-		setvect (i, IDT_DESC_PRESENT | IDT_DESC_BIT32, default_handler);
+		setvect (i, default_handler);
 
-	/* fill the IDT descriptor */
+	// fill the IDT register
 	unsigned long idt_address = (unsigned long)IDT;
 	idt_ptr[0] = (sizeof(struct IDT_entry) * MAX_INTERRUPTS) + ((idt_address & 0xffff) << 16);
 	idt_ptr[1] = idt_address >> 16;

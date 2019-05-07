@@ -3,16 +3,14 @@
 // Ubuntu 18.04 + gcc 7.3.0
 
 /****** kernel.c ******/
-#include "stdio.h"
-#include "idt.h"
-#include "dma.h"
+
+#include "hal.h"
 #include "terminal.h"
-// #include "flpydsk.h"
 
 void main () {
-	idt_init();
-	pic_init();
-	kb_init();
+	hal_initialize();
 	clear_screen();
+	generate_interrupt(1);
+	// printf("%d\n",get_tick_count());
 	terminal();
 }

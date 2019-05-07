@@ -18,21 +18,14 @@
 
 #define KEYBOARD_DATA_PORT 0x60
 #define KEYBOARD_STATUS_PORT 0x64
-
-#define MAX_BUF_LEN 1000
 #define INVALID_KB_CHAR 0
 
-extern void keyboard_handler(void);
+extern void keyboard_handler(void); // assembly
 
 static char kb_char;
 
-void print_char(const char c);
-
 void pic_init(void)
 {
-	/* populate IDT entry of keyboard's interrupt */
-	setvect(0x21,INTERRUPT_GATE,(unsigned long)keyboard_handler);
-
 	/* Ports
 	*         PIC1  PIC2
 	* Command 0x20	0xA0
@@ -87,6 +80,8 @@ void keyboard_handler_main(void)
 
 void kb_init(void)
 {
+	/* populate IDT entry of keyboard's interrupt */
+	setvect(0x21,(unsigned long)keyboard_handler);
 	/* 0xFD is 11111101 - enables only IRQ1 (keyboard)*/
 	port_byte_out(0x21, 0xFD);
 }

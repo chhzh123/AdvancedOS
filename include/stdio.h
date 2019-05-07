@@ -6,14 +6,14 @@
 #define STDIO_H
 
 #include "io.h"
-#include "scancode.h"
-#include "keyboard.h"
 #include "string.h"
 #include <stdarg.h>
 
 // Screen device I/O ports
 #define REG_SCREEN_CTRL 0x3D4
 #define REG_SCREEN_DATA 0x3D5
+
+#define MAX_BUF_LEN 1000
 
 enum Color{
 	BLACK = 0,
@@ -86,40 +86,6 @@ int get_cursor() {
 	// a character cell offset
 	return offset * 2;
 }
-
-// unsigned char read_scan_code()
-// {
-// 	return port_byte_in(REG_KEYBOARD_DATA);
-// }
-
-// char getchar()
-// {
-// 	unsigned char scancode = read_scan_code();   /* Read in the scan code from port 60 */
-
-// 	/* Reset the control port to read in the next character */
-// 	unsigned char cv = port_byte_in(REG_SCREEN_CTRL);   /* Read the value in the control port */
-
-// 	/* Reset to read in next character by switching the 7th bit on
-// 	 * and off on port 61
-// 	 */
-// 	port_byte_out(0x61, cv | 0x80); 
-// 	port_byte_out(0x61, cv); 
-
-// 	/* 
-// 	 *   convert the scan code to ASCII
-// 	 */
-// 	char c = asccode[scancode][0];
-// 	/*
-// 	 *  Send general end of interrupt to external interrupt controller.
-// 	 *  The interrupt controller is a device external to the CPU, and
-// 	 *  mediates incoming interrupts.   Until the CPU "clears" the
-// 	 *  controller, no further external interrupts will be received.
-// 	 *  This "port_byte_out" command will clear the controller.
-// 	 */
-// 	port_byte_out(0x20, 0x20);
-
-// 	return c;
-// }
 
 /* Advance the text cursor, scrolling the video buffer if necessary */
 int handle_scrolling(int cursor_offset) {
@@ -227,6 +193,8 @@ void clear_screen() {
 	// Move the cursor back to the top left
 	set_cursor(get_screen_offset(0, 0));
 }
+
+char getchar(); // defined in keyboard.h
 
 void getline(char* res)
 {
