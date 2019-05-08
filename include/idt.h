@@ -37,8 +37,8 @@ struct IDT_entry IDT[MAX_INTERRUPTS];
 // describes the structure for the processors idtr register
 unsigned long idt_ptr[2];
 
-//! default handler to catch unhandled system interrupts.
-static void default_handler () {
+// default handler to catch unhandled system interrupts.
+void default_handler () {
 	put_error("Error: Unhandled Exception!");
 	for(;;);
 }
@@ -82,7 +82,7 @@ int idt_init() {
 
 	// register default handlers
 	for (int i = 0; i < MAX_INTERRUPTS; i++)
-		setvect (i, default_handler);
+		setvect (i, (unsigned long)default_handler);
 
 	// fill the IDT register
 	unsigned long idt_address = (unsigned long)IDT;

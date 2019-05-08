@@ -20,7 +20,7 @@ These shell commands are defined internally. Type 'help' to see this list.\n\
  show       -- Show existing programs\n\
  tick       -- Show current execution time\n\
  read       -- Read disk and print out\n\
- inter      -- Execute the C / Python Interpreter\n\
+ user       -- Enter user mode\n\
  exec       -- Execute all the user programs\n\
  exec [num] -- Execute the num-th program\n\
  clr        -- Clear the screen\n\
@@ -50,8 +50,11 @@ void read_disk(){
 	if (sector != 0) {
 		int i = 0;
 		for (int c = 0; c < 1; c++ ) {
-			for (int j = 0; j < 128; j++)
-				printf ("0x%x ", sector[ i + j ]);
+			for (int j = 0; j < 128; j++){
+				printf ("%x", sector[ i + j ]);
+				if (j % 2 == 1)
+					printf(" ");
+			}
 			i += 128;
 		}
 		printf("\n");
@@ -79,24 +82,10 @@ void terminal()
 			printf("%d\n",get_tick_count());
 		else if (strcmp(str,"read") == 0)
 			read_disk();
+		else if (strcmp(str,"user") == 0)
+			user_mode();
 		else
 			command_not_found(str);
-		// else if (strcmp(str,INTER_STR) == 0)
-		// 	interpreter();
-		// else if (strlen(str) >= 4){
-		// 	char cpystr[MAX_BUF_LEN];
-		// 	strncpy(cpystr,str,4);
-		// 	if (strcmp(cpystr,EXE_STR) == 0){
-		// 		clear();
-		// 		if (strlen(str) == 4){
-		// 			for (size_os i = 1; i < 5; ++i)
-		// 				execute(i+'0'); // batch execution
-		// 		} else{
-		// 			execute(str[5]);
-		// 		}
-		// 		clear();
-		// 	} else
-		// 		command_not_found(str);
 	}
 }
 

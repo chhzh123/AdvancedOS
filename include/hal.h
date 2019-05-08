@@ -14,16 +14,18 @@
 #include "keyboard.h"
 #include "pit.h"
 #include "flpydsk.h"
-// #include "tss.h"
 
 void hal_initialize(){
-	/*
-	 * Global Description Table (GDT) initialization
-	 */
-	gdt_init(); // re-implement for completeness
+	printf("\n\n\n");
 
 	/*
-	 * Interrupt Description Table (IDT) initialization
+	 * Global Descriptor Table (GDT) and task state segment (TSS) initialization
+	 */
+	gdt_init(); // re-implement for completeness
+	put_info("Initialized GDT & TSS");
+
+	/*
+	 * Interrupt Descriptor Table (IDT) initialization
 	 */
 	idt_init();
 
@@ -47,34 +49,39 @@ void hal_initialize(){
 	setvect (18, (unsigned long) machine_check_abort);
 	setvect (19, (unsigned long) simd_fpu_fault);
 
+	put_info("Initialized IDT");
+
 	/*
 	 * Programmable Interrupt Controller (PIC) initialization
 	 */
 	pic_init();
+	put_info("Initialized PIC");
 
 	/*
 	 * Keyboard initialization
 	 */
 	kb_init();
-	// port_byte_out(0x21, 0xFD); // 1101
-	// port_byte_out(0xA1, 0xFD);
+	put_info("Initialized keyboard");
 
 	/*
 	 * Programmable Interval Timer (PIT) initialization
 	 */
 	pit_init();
 	pit_start_counter(100, PIT_OCW_COUNTER_0, PIT_OCW_MODE_SQUAREWAVEGEN);
+	put_info("Initialized PIT");
 
 	/*
 	 * floppy disk initialization
 	 */
 	flpydsk_set_working_drive(0);
 	flpydsk_init(38);
+	put_info("Initialized floppy disk");
 
 	/*
 	 * task state segment (TSS) initialization
 	 */
 	// tss_init();
+	// put_info("Initialized TSS");
 }
 
 void generate_interrupt(int n){
@@ -91,6 +98,24 @@ void generate_interrupt(int n){
 void sleep (int ms) {
 	int ticks = ms + get_tick_count ();
 	while (ticks > get_tick_count ());
+}
+
+extern void enter_usermode(); // assembly
+
+void user_mode() {
+	int stack = 0;
+
+	__asm__ (
+			"mov eax, esp"
+			:"=a"(stack)
+			:
+			);
+
+	tss_set_stack (0x10,stack);
+
+	enter_usermode();
+
+	put_info("We are in user mode!");
 }
 
 #endif // HAL_H

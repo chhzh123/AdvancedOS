@@ -7,16 +7,25 @@
 [ extern main ] ; Declate that we will be referencing the external symbol 'main',
                 ; so the linker can substitute the final address
 [ global _start ]
-[ global load_gdt ]
 
 _start:
 	call main   ; invoke main() in C kernel
 	jmp $       ; Hang forever when we return from the kernel
 
 %include "interrupt.asm"
-; %include "user.asm"
+%include "user.asm"
+
+[ global load_gdt ]
+[ extern _gdtr ]
 
 load_gdt:
-	mov edx, [ esp + 4 ]
-	lidt [ edx ]        ; load global description table (GDT)
+	lgdt [ _gdtr ]
+	mov ax, 0x10                ; kernel mode
+	mov ds, ax                  ; so we point our segment registers to the
+	mov es, ax
+	mov fs, ax
+	mov gs, ax
+	mov ss, ax                  ; data selector we defined in our GDT
+	jmp 0x08:load_gdt_ret
+load_gdt_ret:
 	ret

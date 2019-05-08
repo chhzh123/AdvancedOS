@@ -38,8 +38,7 @@ int ATTRIBUTE_VAL = 0x0007;
 
 /* Copy bytes from one place to another */
 void memory_copy(char* source, char* dest, int no_bytes) {
-	int i;
-	for (i = 0; i < no_bytes; i++) {
+	for (int i = 0; i < no_bytes; i++) {
 		*(dest + i) = *(source + i);
 	}
 }
@@ -96,11 +95,11 @@ int handle_scrolling(int cursor_offset) {
 	/* Shuffle the rows back one */
 	int i;
 	for(i = 1; i < MAX_ROWS; i ++) {
-		memory_copy(get_screen_offset(0, i) + VIDEO_ADDRESS,
-					get_screen_offset(0, i-1) + VIDEO_ADDRESS, MAX_COLS * 2);
+		memory_copy((char*)(get_screen_offset(0, i) + VIDEO_ADDRESS),
+					(char*)(get_screen_offset(0, i-1) + VIDEO_ADDRESS), MAX_COLS * 2);
 	}
 	/* Blank the last line by setting all bytes to 0 */
-	char* last_line = get_screen_offset(0, MAX_ROWS -1) + VIDEO_ADDRESS;
+	char* last_line = (char*)(get_screen_offset(0, MAX_ROWS -1) + VIDEO_ADDRESS);
 	for(i = 0; i < MAX_COLS *2; i ++) {
 		last_line[i] = 0;
 	}
@@ -390,6 +389,18 @@ void put_error(char* str)
 	set_color(RED,BLACK);
 	print(str);
 	set_color(WHITE,BLACK);
+}
+
+void put_info(char* str)
+{
+	set_color(WHITE,BLACK);
+	print("[ ");
+	set_color(GREEN,BLACK);
+	print("OK");
+	set_color(WHITE,BLACK);
+	print(" ] ");
+	print(str);
+	print("\n");
 }
 
 #endif // STDIO_H

@@ -7,6 +7,7 @@
 #ifndef GDT_H
 #define GDT_H
 
+#include "tss.h"
 #include "string.h"
 
 // maximum amount of descriptors allowed
@@ -40,6 +41,28 @@
 // 4k grandularity. default: none
 #define GDT_GRAND_4K			0x80			//10000000
 
+/* global segment number */
+#define SEG_KTEXT   1
+#define SEG_KDATA   2
+#define SEG_UTEXT   3
+#define SEG_UDATA   4
+#define SEG_TSS     5
+
+/* global descrptor numbers */
+#define GD_KTEXT    ((SEG_KTEXT) << 3)      // kernel text
+#define GD_KDATA    ((SEG_KDATA) << 3)      // kernel data
+#define GD_UTEXT    ((SEG_UTEXT) << 3)      // user text
+#define GD_UDATA    ((SEG_UDATA) << 3)      // user data
+#define GD_TSS      ((SEG_TSS) << 3)        // task segment selector
+
+#define DPL_KERNEL  (0)
+#define DPL_USER    (3)
+
+#define KERNEL_CS   ((GD_KTEXT) | DPL_KERNEL)
+#define KERNEL_DS   ((GD_KDATA) | DPL_KERNEL)
+#define USER_CS     ((GD_UTEXT) | DPL_USER)
+#define USER_DS     ((GD_UDATA) | DPL_USER)
+
 // gdt descriptor. A gdt descriptor defines the properties of a specific
 // memory block and permissions.
 
@@ -53,13 +76,13 @@ struct gdt_descriptor {
 	uint8_t			baseMid;
 
 	// descriptor access flags
-	uint8_t			flags;
+	uint8_t			flags; // access
 
-	uint8_t			grand;
+	uint8_t			grand; // limit_high, flags
 
 	// bits 24-32 of base address
 	uint8_t			baseHi;
-};
+} __attribute__((packed));
 
 // processor gdtr register points to base of gdt. This helps
 // us set up the pointer
@@ -70,16 +93,13 @@ struct gdtr {
 
 	// base address of gdt
 	uint32_t		m_base;
-};
+} __attribute__((packed));
 
 // global descriptor table is an array of descriptors
 static struct gdt_descriptor	_gdt [MAX_DESCRIPTORS];
 
 // gdtr data
-static struct gdtr				_gdtr;
-
-// install gdtr
-extern void load_gdt(unsigned long *gdt_ptr);
+struct gdtr				_gdtr; // used for assembly
 
 // Setup a descriptor in the Global Descriptor Table
 void gdt_set_descriptor(uint32_t i, uint64_t base, uint64_t limit, uint8_t access, uint8_t grand)
@@ -102,7 +122,6 @@ void gdt_set_descriptor(uint32_t i, uint64_t base, uint64_t limit, uint8_t acces
 	_gdt[i].grand |= grand & 0xf0;
 }
 
-
 // returns descriptor in gdt
 struct gdt_descriptor* gdt_get_descriptor (int i) {
 
@@ -112,6 +131,15 @@ struct gdt_descriptor* gdt_get_descriptor (int i) {
 	return &_gdt[i];
 }
 
+void tss_init() {
+	gdt_set_descriptor (5, 0x10, sizeof(struct tss_entry),
+		GDT_DESC_ACCESS|GDT_DESC_EXEC_CODE|GDT_DESC_DPL|GDT_DESC_MEMORY,
+		0);
+}
+
+// install gdtr
+extern void load_gdt(); // assembly
+
 // initialize gdt
 int gdt_init () {
 
@@ -119,31 +147,32 @@ int gdt_init () {
 	_gdtr.m_limit = (sizeof (struct gdt_descriptor) * MAX_DESCRIPTORS)-1;
 	_gdtr.m_base = (uint32_t)&_gdt[0];
 
-	// set null descriptor
+	// set null descriptor (0x00)
 	gdt_set_descriptor(0, 0, 0, 0, 0);
 
-	// set default code descriptor
+	// set default code descriptor (0x08)
 	gdt_set_descriptor (1,0,0xffffffff,
 		GDT_DESC_READWRITE|GDT_DESC_EXEC_CODE|GDT_DESC_CODEDATA|GDT_DESC_MEMORY,
 		GDT_GRAND_4K | GDT_GRAND_32BIT | GDT_GRAND_LIMITHI_MASK);
 
-	// set default data descriptor
+	// set default data descriptor (0x10)
 	gdt_set_descriptor (2,0,0xffffffff,
 		GDT_DESC_READWRITE|GDT_DESC_CODEDATA|GDT_DESC_MEMORY,
 		GDT_GRAND_4K | GDT_GRAND_32BIT | GDT_GRAND_LIMITHI_MASK);
 
-	// set default user mode code descriptor
+	// set default user mode code descriptor (0x18)
 	gdt_set_descriptor (3,0,0xffffffff,
 		GDT_DESC_READWRITE|GDT_DESC_EXEC_CODE|GDT_DESC_CODEDATA|GDT_DESC_MEMORY|GDT_DESC_DPL,
 		GDT_GRAND_4K | GDT_GRAND_32BIT | GDT_GRAND_LIMITHI_MASK);
 
-	// set default user mode data descriptor
+	// set default user mode data descriptor (0x20)
 	gdt_set_descriptor (4,0,0xffffffff,
 		GDT_DESC_READWRITE|GDT_DESC_CODEDATA|GDT_DESC_MEMORY|GDT_DESC_DPL,
 		GDT_GRAND_4K | GDT_GRAND_32BIT | GDT_GRAND_LIMITHI_MASK);
 
-	// install gdtr
-	load_gdt((unsigned long*)&_gdtr); // assembly
+	tss_init();
+	load_gdt(); // assembly
+	tss_install();
 
 	return 0;
 }
