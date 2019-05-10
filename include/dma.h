@@ -9,10 +9,6 @@
 
 #include <stdint.h>
 
-//============================================================================
-//    INTERFACE DEFINITIONS / ENUMERATIONS / SIMPLE TYPEDEFS
-//============================================================================
-
 /**
 *	2 DMACs, 32 bit master & 16bit slave each having 8 channels
 */
@@ -24,7 +20,7 @@
 */
 enum DMA0_CHANNEL_IO {
 
-	DMA0_CHAN0_ADDR_REG = 0, //! Thats right, i/o port 0
+	DMA0_CHAN0_ADDR_REG = 0, // Thats right, i/o port 0
 	DMA0_CHAN0_COUNT_REG = 1,
 	DMA0_CHAN1_ADDR_REG = 2,
 	DMA0_CHAN1_COUNT_REG = 3,
@@ -71,7 +67,7 @@ enum DMA1_CHANNEL_IO {
 */
 enum DMA0_PAGE_REG {
 
-	DMA_PAGE_EXTRA0 = 0x80, //! Also diagnostics port
+	DMA_PAGE_EXTRA0 = 0x80, // Also diagnostics port
 	DMA_PAGE_CHAN2_ADDRBYTE2 = 0x81,
 	DMA_PAGE_CHAN3_ADDRBYTE2 = 0x82,
 	DMA_PAGE_CHAN1_ADDRBYTE2 = 0x83,
@@ -84,7 +80,7 @@ enum DMA0_PAGE_REG {
 	DMA_PAGE_EXTRA4 = 0x8c,
 	DMA_PAGE_EXTRA5 = 0x8d,
 	DMA_PAGE_EXTRA6 = 0x8e,
-	DMA_PAGE_DRAM_REFRESH = 0x8f //!no longer used in new PCs
+	DMA_PAGE_DRAM_REFRESH = 0x8f //no longer used in new PCs
 };
 
 /**
@@ -138,7 +134,7 @@ enum DMA_CMD_REG_MASK {
 	DMA_CMD_MASK_DACK = 0x80
 };
 
-//! masks a channel
+// masks a channel
 void dma_mask_channel(uint8_t channel){
 
 	if (channel <= 4)
@@ -147,7 +143,7 @@ void dma_mask_channel(uint8_t channel){
 		port_byte_out(DMA1_CHANMASK_REG, (1 << (channel-5)));
 }
 
-//! unmasks a channel
+// unmasks a channel
 void dma_unmask_channel (uint8_t channel) {
 
 	if (channel <= 4)
@@ -156,31 +152,31 @@ void dma_unmask_channel (uint8_t channel) {
 		port_byte_out(DMA1_CHANMASK_REG, channel);
 }
 
-//! unmasks all channels
+// unmasks all channels
 void dma_unmask_all (int dma){
 
-	//! it doesnt matter what is written to this register
+	// it doesnt matter what is written to this register
 	port_byte_out(DMA1_UNMASK_ALL_REG, 0xff);
 }
 
-//! resets controller to defaults
+// resets controller to defaults
 void dma_reset (int dma){
 
-	//! it doesnt matter what is written to this register
+	// it doesnt matter what is written to this register
 	port_byte_out(DMA0_TEMP_REG, 0xff);
 }
 
-//! resets flipflop
+// resets flipflop
 void dma_reset_flipflop(int dma){
 
 	if (dma < 2)
 		return;
 
-	//! it doesnt matter what is written to this register
+	// it doesnt matter what is written to this register
 	port_byte_out( (dma==0) ? DMA0_CLEARBYTE_FLIPFLOP_REG : DMA1_CLEARBYTE_FLIPFLOP_REG, 0xff);
 }
 
-//! sets the address of a channel
+// sets the address of a channel
 void dma_set_address(uint8_t channel, uint8_t low, uint8_t high) {
 
 	if ( channel > 8 )
@@ -203,7 +199,7 @@ void dma_set_address(uint8_t channel, uint8_t low, uint8_t high) {
 	port_byte_out(port, high);
 }
 
-//! sets the counter of a channel
+// sets the counter of a channel
 void dma_set_count(uint8_t channel, uint8_t low, uint8_t high) {
 
 	if ( channel > 8 )
@@ -236,20 +232,20 @@ void dma_set_mode (uint8_t channel, uint8_t mode) {
 	dma_unmask_all ( dma );
 }
 
-//! prepares channel for read
+// prepares channel for read
 void dma_set_read (uint8_t channel) {
 
 	dma_set_mode (channel,	DMA_MODE_READ_TRANSFER | DMA_MODE_TRANSFER_SINGLE);
 }
 
-//! prepares channel for write
+// prepares channel for write
 void dma_set_write (uint8_t channel) {
 
 	dma_set_mode (channel,
 		DMA_MODE_WRITE_TRANSFER | DMA_MODE_TRANSFER_SINGLE);
 }
 
-//! writes to an external page register
+// writes to an external page register
 void dma_set_external_page_register (uint8_t reg, uint8_t val) {
 
 	if (reg > 14)
@@ -261,7 +257,7 @@ void dma_set_external_page_register (uint8_t reg, uint8_t val) {
 		case 1: {port = DMA_PAGE_CHAN1_ADDRBYTE2; break;}
 		case 2: {port = DMA_PAGE_CHAN2_ADDRBYTE2; break;}
 		case 3: {port = DMA_PAGE_CHAN3_ADDRBYTE2; break;}
-		case 4: {return;}//! nothing should ever write to register 4
+		case 4: {return;}// nothing should ever write to register 4
 		case 5: {port = DMA_PAGE_CHAN5_ADDRBYTE2; break;}
 		case 6: {port = DMA_PAGE_CHAN6_ADDRBYTE2; break;}
 		case 7: {port = DMA_PAGE_CHAN7_ADDRBYTE2; break;}

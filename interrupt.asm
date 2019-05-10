@@ -5,10 +5,8 @@
 [ global load_idt ]
 [ global keyboard_handler ]
 [ global pit_handler ]
-[ global flpydsk_handler ]
 [ extern keyboard_handler_main ]
 [ extern pit_handler_main ]
-[ extern flpydsk_handler_main ]
 
 load_idt:
 	mov edx, [ esp + 4 ]
@@ -22,8 +20,4 @@ keyboard_handler:
 
 pit_handler:
 	call pit_handler_main
-	iretd
-
-flpydsk_handler:
-	call flpydsk_handler_main
 	iretd

@@ -8,21 +8,6 @@
 #include "dma.h"
 #include <stdint.h>
 
-// install floppy driver
-void flpydsk_install (int irq);
-
-// set current working drive
-void flpydsk_set_working_drive (uint8_t drive);
-
-// get current working drive
-uint8_t flpydsk_get_working_drive ();
-
-// read a sector
-uint8_t* flpydsk_read_sector (int sectorLBA);
-
-// converts an LBA address to CHS
-void flpydsk_lba_to_chs (int lba,int *head,int *track,int *sector);
-
 /*
 **	Controller I/O Ports. Please see chapter for additional ports
 */
@@ -181,43 +166,43 @@ static volatile uint8_t _FloppyDiskIRQ = 0;
 void flpydsk_initialize_dma () {
 	port_byte_out (0x0a, 0x06); // mask dma channel 2
 	port_byte_out (0xd8, 0xff); // reset master flip-flop
-	port_byte_out (0x04, 0);    // address = 0x1000 
-	port_byte_out (0x04, 0x10);
+	port_byte_out (0x04, 0);	 // lower address, address = 0x1000 
+	port_byte_out (0x04, 0x10); // higher address
 	port_byte_out (0xd8, 0xff); // reset master flip-flop
 	port_byte_out (0x05, 0xff); // count to 0x23ff (number of bytes in a 3.5" floppy disk track)
 	port_byte_out (0x05, 0x23);
-	port_byte_out (0x80, 0);    // external page register = 0
+	port_byte_out (0x80, 0);	 // external page register = 0
 	port_byte_out (0x0a, 0x02); // unmask dma channel 2
 }
 
 bool dma_initialize_floppy(uint8_t* buffer, unsigned length){
-    union{
-       uint8_t byte[4];//Lo[0], Mid[1], Hi[2]
-       unsigned long l;
-    }a, c;
+	union{
+		uint8_t byte[4];//Lo[0], Mid[1], Hi[2]
+		unsigned long l;
+	}a, c;
 
-    a.l=(unsigned)buffer;
-    c.l=(unsigned)length-1;
+	a.l = (unsigned)buffer;
+	c.l = (unsigned)length-1;
 
-    // Check for buffer issues
-    if ((a.l >> 24) || (c.l >> 16) || (((a.l & 0xffff)+c.l) >> 16)){
-    	put_error("Error when reading floppy disk!");
-        return false;
-    }
+	// Check for buffer issues
+	if ((a.l >> 24) || (c.l >> 16) || (((a.l & 0xffff)+c.l) >> 16)){
+		put_error("Error when reading floppy disk!");
+		return false;
+	}
 
-    dma_reset (1);
-    dma_mask_channel( FDC_DMA_CHANNEL );//Mask channel 2
-    dma_reset_flipflop ( 1 );//Flipflop reset on DMA 1
+	dma_reset (1);
+	dma_mask_channel( FDC_DMA_CHANNEL );//Mask channel 2
+	dma_reset_flipflop ( 1 );//Flipflop reset on DMA 1
 
-    dma_set_address( FDC_DMA_CHANNEL, a.byte[0],a.byte[1]);//Buffer address
-    dma_reset_flipflop( 1 );//Flipflop reset on DMA 1
+	dma_set_address( FDC_DMA_CHANNEL, a.byte[0], a.byte[1] );//Buffer address
+	dma_reset_flipflop( 1 );//Flipflop reset on DMA 1
  
-    dma_set_count( FDC_DMA_CHANNEL, c.byte[0],c.byte[1]);//Set count
-    dma_set_read ( FDC_DMA_CHANNEL );
+	dma_set_count( FDC_DMA_CHANNEL, c.byte[0], c.byte[1] );//Set count
+	dma_set_read ( FDC_DMA_CHANNEL );
 
-    dma_unmask_all( 1 );//Unmask channel 2
+	dma_unmask_all( 1 );//Unmask channel 2
 
-    return true;
+	return true;
 }
 
 /**
@@ -335,7 +320,7 @@ void flpydsk_control_motor (bool b) {
 		flpydsk_write_dor (FLPYDSK_DOR_MASK_RESET);
 
 	// in all cases; wait a little bit for the motor to spin up/turn off
-	// sleep (2);
+	sleep (20);
 }
 
 // configure drive
@@ -431,11 +416,11 @@ void flpydsk_read_sector_imp (uint8_t head, uint8_t track, uint8_t sector) {
 
 	// read in a sector
 	flpydsk_send_command (
-				FDC_CMD_READ_SECT | FDC_CMD_EXT_MULTITRACK | FDC_CMD_EXT_SKIP | FDC_CMD_EXT_DENSITY);
+				FDC_CMD_READ_SECT | FDC_CMD_EXT_MULTITRACK | FDC_CMD_EXT_SKIP | FDC_CMD_EXT_DENSITY );
 	flpydsk_send_command ( head << 2 | _CurrentDrive );
-	flpydsk_send_command ( track);
-	flpydsk_send_command ( head);
-	flpydsk_send_command ( sector);
+	flpydsk_send_command ( track );
+	flpydsk_send_command ( head );
+	flpydsk_send_command ( sector );
 	flpydsk_send_command ( FLPYDSK_SECTOR_DTL_512 );
 	flpydsk_send_command ( ( ( sector + 1 ) >= FLPY_SECTORS_PER_TRACK ) ? FLPY_SECTORS_PER_TRACK : sector + 1 );
 	flpydsk_send_command ( FLPYDSK_GAP3_LENGTH_3_5 );
@@ -445,7 +430,7 @@ void flpydsk_read_sector_imp (uint8_t head, uint8_t track, uint8_t sector) {
 	flpydsk_wait_irq ();
 
 	// read status info
-	for (int j=0; j<7; j++)
+	for (int j = 0; j < 7; j++)
 		flpydsk_read_data ();
 
 	// let FDC know we handled interrupt
@@ -472,7 +457,7 @@ int flpydsk_seek ( uint8_t cyl, uint8_t head ) {
 		flpydsk_check_int (&st0,&cyl0);
 
 		// found the cylinder?
-		if ( cyl0 == cyl)
+		if ( cyl0 == cyl )
 			return 0;
 	}
 
@@ -480,15 +465,15 @@ int flpydsk_seek ( uint8_t cyl, uint8_t head ) {
 }
 
 //============================================================================
-//    INTERFACE FUNCTIONS
+//	 INTERFACE FUNCTIONS
 //============================================================================
 
 // convert LBA to CHS
-void flpydsk_lba_to_chs (int lba,int *head,int *track,int *sector) {
+void flpydsk_lba_to_chs (int lba,int *head,int *track,int *sector) { // track/cylinder
 
-   *head = ( lba % ( FLPY_SECTORS_PER_TRACK * 2 ) ) / ( FLPY_SECTORS_PER_TRACK );
-   *track = lba / ( FLPY_SECTORS_PER_TRACK * 2 );
-   *sector = lba % FLPY_SECTORS_PER_TRACK + 1;
+	*head = (lba % (2 * FLPY_SECTORS_PER_TRACK)) / FLPY_SECTORS_PER_TRACK;
+	*track = lba / (2 * FLPY_SECTORS_PER_TRACK);
+	*sector = lba % (2 * FLPY_SECTORS_PER_TRACK) % FLPY_SECTORS_PER_TRACK + 1;
 }
 
 extern void flpydsk_handler();

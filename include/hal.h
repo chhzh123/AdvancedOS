@@ -13,11 +13,10 @@
 #include "pic.h"
 #include "keyboard.h"
 #include "pit.h"
-#include "flpydsk.h"
+#include "ide.h"
 
 void hal_initialize(){
 	printf("\n\n\n");
-
 	/*
 	 * Global Descriptor Table (GDT) and task state segment (TSS) initialization
 	 */
@@ -69,13 +68,6 @@ void hal_initialize(){
 	pit_init();
 	pit_start_counter(100, PIT_OCW_COUNTER_0, PIT_OCW_MODE_SQUAREWAVEGEN);
 	put_info("Initialized PIT");
-
-	/*
-	 * floppy disk initialization
-	 */
-	flpydsk_set_working_drive(0);
-	flpydsk_init(38);
-	put_info("Initialized floppy disk");
 
 	/*
 	 * task state segment (TSS) initialization

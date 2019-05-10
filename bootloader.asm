@@ -8,7 +8,7 @@
 ;;;;; Initialization ;;;;;
 	org 0x7c00
 
-	KERNEL_OFFSET equ 0x1000
+	KERNEL_OFFSET equ 0x7e00
 
 %macro show_string_rm 3
 	; msg, row, col
@@ -18,7 +18,7 @@
 	call print_string_rm
 %endmacro
 
-	mov bp, 0x9000 ; Set the stack.
+	mov bp, 0x7c00 ; Set the stack.
 	mov sp, bp
 	
 	show_string_rm MSG_REAL_MODE, 0, 0
