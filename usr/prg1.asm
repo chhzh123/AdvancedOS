@@ -22,7 +22,7 @@ out_delay equ 6000  ; outer loop
 
 	jmp mainloop
 
-%include "show.asm"
+%include "include/show.inc"
 
 %macro OneChar 5
 	; px: position x

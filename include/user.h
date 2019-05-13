@@ -40,6 +40,8 @@ void user_mode() {
 
 	void* new_addr = (void*)NEW_USER_ADDR;
 	memcpy(new_addr,(const void*)USER_ADDR,SECTSIZE*2);
+
+#ifdef DEBUG
 	uint8_t* sector = (uint8_t*)new_addr;
 	int i = 0;
 	for (int c = 0; c < 4; c++ ) {
@@ -51,6 +53,7 @@ void user_mode() {
 		i += 128;
 	}
 	printf("\n");
+#endif
 
 	put_info("Begin entering user mode...");
 
