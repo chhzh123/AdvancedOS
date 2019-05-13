@@ -9,6 +9,7 @@
 
 #include "stdio.h"
 #include "string.h"
+#include "user.h"
 
 const char* PROMPT_INFO = "chzos> ";
 const char* HELLO_INFO = "Welcome to CHZOS!\n";

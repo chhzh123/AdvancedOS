@@ -10,18 +10,13 @@
 
 	KERNEL_OFFSET equ 0x7e00
 
-%macro show_string_rm 3
-	; msg, row, col
-	mov dh, %2
-	mov dl, %3
-	mov bx, %1
-	call print_string_rm
-%endmacro
-
 	mov bp, 0x7c00 ; Set the stack.
 	mov sp, bp
 	
-	show_string_rm MSG_REAL_MODE, 0, 0
+	mov dh, 0
+	mov dl, 0
+	mov bx, MSG_REAL_MODE
+	call print_string_rm
 
 	call load_kernel
 
@@ -43,14 +38,6 @@ load_kernel:
 	ret
 
 [ bits 32 ]
-
-%macro show_string_pm 3
-	; msg, row, col
-	mov dh, %2
-	mov dl, %3
-	mov bx, %1
-	call print_string
-%endmacro
 
 ; This is where we arrive after switching to and initialising protected mode
 BEGIN_PM:

@@ -8,6 +8,17 @@ VIDEO_MEMORY    equ 0xb8000
 WHITE_ON_BLACK  equ 0x07
 
 ;;;;; Real mode output ;;;;;
+
+[ bits 16 ]
+
+%macro show_string_rm 3
+    ; msg, row, col
+    mov dh, %2
+    mov dl, %3
+    mov bx, %1
+    call print_string_rm
+%endmacro
+
 print_string_rm:
 ; Input:
 ;    bx: the starting address of the string
@@ -46,30 +57,57 @@ print_string_rm_done:
 
 [ bits 32 ]
 
+%macro show_string_pm 3
+    ; msg, row, col
+    mov ax, WHITE_ON_BLACK
+    mov dh, %2
+    mov dl, %3
+    mov ebx, %1
+    call print_string
+%endmacro
+
+%macro show_string_color 4
+    ; msg, row, col, color
+    mov ax, %4
+    mov dh, %2
+    mov dl, %3
+    mov ebx, %1
+    call print_string
+%endmacro
+
 print_string:
 ; Input:
 ;    ebx: the starting address of the string
 ;    dh: row
 ;    dl: col
     pusha
+    push esi
+    push edi
+    mov si, ax                    ; color
     ; Compute memory address
     xor eax, eax                  ; eax = 0
     mov al, dh                    ; eax = row
+    xor edi, edi                  ; edi = 0
+    and dh, 0
+    mov di, dx                    ; edi = col
     mov ecx, 80                   ; ecx = 80
     mul ecx                       ; dst-op: eax = 80*row, src-op: parameter (ecx)
-    add al, dl                    ; eax = 80*row + col
+    add eax, edi                  ; eax = 80*row + col
     mov ecx, 2                    ; ecx = 2
     mul ecx                       ; eax = (80*row + col) * 2
     add eax, VIDEO_MEMORY
 print_string_loop:
-    mov cl, [ ebx ]               ; Store the char at ebx in al
-    mov ch, WHITE_ON_BLACK        ; Store the attributes in ah
-    cmp cl, 0                     ; if (al == 0), at end of string, so
+    mov cx, si
+    mov ch, cl                    ; Store the attributes in ch
+    mov cl, [ ebx ]               ; Store the char at ebx in cl
+    cmp cl, 0                     ; if (cl == 0), at end of string, so
     je print_string_done          ; jump to done
     mov [ eax ], cx               ; Store char and attributes at current character cell
     add ebx, 1                    ; Increment ebx to the next char in string
     add eax, 2                    ; Move to next character cell in VMEM
-    jmp print_string_loop      ; loop around to print the next char
+    jmp print_string_loop         ; loop around to print the next char
 print_string_done:
+    pop edi
+    pop esi
     popa
     ret                           ; Return from the function

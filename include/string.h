@@ -19,6 +19,15 @@ void *memset(void *dest, char val, size_t count)
 	return dest;
 }
 
+void *memcpy(void *dst, const void *src, size_t n) {
+    const char *s = src;
+    char *d = dst;
+    while (n-- > 0) {
+        *d ++ = *s ++;
+    }
+    return dst;
+}
+
 size_t strlen(const char* str) 
 {
 	size_t len = 0;

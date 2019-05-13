@@ -4,9 +4,10 @@
 
 /****** tss.h ******/
 
-#ifndef TSS_H
-#define TSS_H
+#ifndef tss_H
+#define tss_H
 
+#include "stdio.h"
 #include "string.h"
 #include <stdint.h>
 
@@ -40,66 +41,32 @@ struct tss_entry {
 	uint16_t iomap;
 } __attribute__((packed));
 
-struct tss_entry TSS;
+struct tss_entry tss;
 
-void tss_install () {
+void tss_install (uint32_t sel) {
+
+	memset((void *)&tss, 0, sizeof(tss));
+
+	// set stack and segments
+	tss.ss0 = KERNEL_DS;
+	tss.esp0 = 0x0;
+	tss.cs = KERNEL_CS | DPL_USER;
+	tss.ss = tss.es = tss.ds = tss.fs = tss.gs = KERNEL_DS | DPL_USER;
+
 	__asm__ volatile (
 			"ltr ax\n\t"
 			:
-			:"a"(5 << 3)
+			:"a"(sel << 3)
 			:
 			);
 }
 
-// extern void load_tss(unsigned long* tss_ptr); // assembly
-
 void tss_set_stack (uint16_t kernelSS, uint16_t kernelESP) {
 
-	memset((void *)&TSS, 0, sizeof(TSS));
-	TSS.ss0 = kernelSS;
-	TSS.esp0 = kernelESP;
-	TSS.iomap = sizeof(TSS);
+	// memset((void *)&tss, 0, sizeof(tss));
+	tss.ss0 = kernelSS;
+	tss.esp0 = kernelESP;
+	// tss.iomap = sizeof(tss);
 }
 
-// void install_tss (uint32_t idx, uint16_t kernelSS, uint16_t kernelESP) {
-
-// 	// install TSS descriptor
-// 	uint32_t base = (uint32_t) &TSS;
-
-// 	// initialize TSS
-// 	memset ((void*) &TSS, 0, sizeof (struct tss_entry));
-
-// 	// set stack and segments
-// 	TSS.ss0 = kernelSS;
-// 	TSS.esp0 = kernelESP;
-// 	TSS.cs = 0x0b;
-// 	TSS.ss = 0x13;
-// 	TSS.es = 0x13;
-// 	TSS.ds = 0x13;
-// 	TSS.fs = 0x13;
-// 	TSS.gs = 0x13;
-
-// 	put_info("TSS: Initialized TSS Done!");
-
-// 	// install descriptor
-// 	// Warning: TSS MUST be put in GDT, not in LDT or IDT
-// 	gdt_set_descriptor (idx, base, base + sizeof (struct tss_entry),
-// 		GDT_DESC_ACCESS|GDT_DESC_EXEC_CODE|GDT_DESC_DPL|GDT_DESC_MEMORY,
-// 		0);
-// 	put_info("TSS: Set GDT Done!");
-
-// 	// reload all segment registers
-// 	load_gdt((uint32_t*)&_gdtr); // assembly
-// 	put_info("TSS: Reload GDT!");
-
-// 	// flush tss
-// 	load_tss(idx << 3);
-// 	put_info("TSS: Load TSS Done!");
-// }
-
-// void tss_init()
-// {
-// 	install_tss(5,0x10,0); // the 5th item in gdt (0x2b)
-// }
-
-#endif // TSS_H
+#endif // tss_H

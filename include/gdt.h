@@ -7,7 +7,6 @@
 #ifndef GDT_H
 #define GDT_H
 
-#include "tss.h"
 #include "string.h"
 
 // maximum amount of descriptors allowed
@@ -58,10 +57,12 @@
 #define DPL_KERNEL  (0)
 #define DPL_USER    (3)
 
-#define KERNEL_CS   ((GD_KTEXT) | DPL_KERNEL)
-#define KERNEL_DS   ((GD_KDATA) | DPL_KERNEL)
-#define USER_CS     ((GD_UTEXT) | DPL_USER)
-#define USER_DS     ((GD_UDATA) | DPL_USER)
+#define KERNEL_CS   ((GD_KTEXT) | DPL_KERNEL) // 0x08
+#define KERNEL_DS   ((GD_KDATA) | DPL_KERNEL) // 0x10
+#define USER_CS     ((GD_UTEXT) | DPL_USER)   // 0x18
+#define USER_DS     ((GD_UDATA) | DPL_USER)   // 0x20
+
+#include "tss.h"
 
 // gdt descriptor. A gdt descriptor defines the properties of a specific
 // memory block and permissions.
@@ -75,9 +76,27 @@ struct gdt_descriptor {
 	uint16_t		baseLo;
 	uint8_t			baseMid;
 
-	// descriptor access flags
+	/*
+	 * descriptor access flags
+	 * | 7 | 6 | 5 | 4 | 3 | 2 | 1 | 0 |
+	 * | P |  DPL  | S |      TYPE     |
+	 * P: Present in memory or not
+	 * DPL(Descriptor Privilege Level): ring 0 - ring 3
+	 * S: 1 - Data/Code descriptor | 0 - gate descriptor
+	 * Type: When S = 1
+	 *    3: Executable
+	 *    2: Consistent
+	 *    1: 1 - Read+Write | 0 - Only read
+	 *    0: Accessed
+	 */
 	uint8_t			flags; // access
 
+	/*
+	 * grand
+	 * | 7 |  6  | 5 |  4  | 3 | 2 | 1 | 0 |
+	 * | G | D/B | 0 | AVL |   Limit high  |
+	 * G: 0 - B | 1 - 4KB
+	 */
 	uint8_t			grand; // limit_high, flags
 
 	// bits 24-32 of base address
@@ -131,8 +150,9 @@ struct gdt_descriptor* gdt_get_descriptor (int i) {
 	return &_gdt[i];
 }
 
-void tss_init() {
-	gdt_set_descriptor (5, 0x10, sizeof(struct tss_entry),
+void tss_init(uint32_t sel) {
+	uint32_t base = (uint32_t) &tss;
+	gdt_set_descriptor (sel, base, base + sizeof(tss),
 		GDT_DESC_ACCESS|GDT_DESC_EXEC_CODE|GDT_DESC_DPL|GDT_DESC_MEMORY,
 		0);
 }
@@ -170,9 +190,9 @@ int gdt_init () {
 		GDT_DESC_READWRITE|GDT_DESC_CODEDATA|GDT_DESC_MEMORY|GDT_DESC_DPL,
 		GDT_GRAND_4K | GDT_GRAND_32BIT | GDT_GRAND_LIMITHI_MASK);
 
-	tss_init();
+	tss_init(5);
 	load_gdt(); // assembly
-	tss_install();
+	tss_install(5);
 
 	return 0;
 }

@@ -16,9 +16,14 @@ BUILD = build
 
 IMG = bootflpy.img
 KERNEL = bootloader.bin kernel.bin
-DEBUG = kernel.s
 
 HARDDISK = mydisk.hdd
+USRDIR = usr
+USR = prg1.com prg2.com prg3.com prg4.com prg5.com prg6.com
+
+ifdef DEBUG
+DEBUGFILES = kernel.s
+endif
 
 all: build programs
 	-rm -f $(IMG)
@@ -26,11 +31,18 @@ all: build programs
 	dd if=$(BUILD)/bootloader.bin of=$(IMG) conv=notrunc
 	dd if=$(BUILD)/kernel.bin of=$(IMG) seek=1 conv=notrunc # 2nd sector
 	/sbin/mkfs.msdos -C $(HARDDISK) 1440
+	dd if=$(BUILD)/$(USRDIR)/prg1.com of=$(HARDDISK) conv=notrunc
+	dd if=$(BUILD)/$(USRDIR)/prg2.com of=$(HARDDISK) seek=2 conv=notrunc
+	dd if=$(BUILD)/$(USRDIR)/prg3.com of=$(HARDDISK) seek=4 conv=notrunc
+	dd if=$(BUILD)/$(USRDIR)/prg4.com of=$(HARDDISK) seek=6 conv=notrunc
+	dd if=$(BUILD)/$(USRDIR)/prg5.com of=$(HARDDISK) seek=8 conv=notrunc
+	dd if=$(BUILD)/$(USRDIR)/prg6.com of=$(HARDDISK) seek=10 conv=notrunc
 
 build:
 	-mkdir $(BUILD)
+	-mkdir $(BUILD)/$(USRDIR)
 
-programs: $(KERNEL) $(DEBUG)
+programs: $(KERNEL) $(foreach prg,$(USR),$(USRDIR)/$(prg)) $(DEBUGFILES)
 
 bootloader.bin: bootloader.asm
 	$(AS) -fbin $< -o $(BUILD)/$@
@@ -41,6 +53,8 @@ kernel.bin: kernel_entry.o kernel.o
 	$(AS) $(ASFLAGS) $< -o $(BUILD)/$@
 %.o : %.c
 	$(CC) $(CCFLAGS) $< -o $(BUILD)/$@
+%.com : %.asm
+	$(AS) $< -o $(BUILD)/$@
 
 # debug
 %.s : %.c

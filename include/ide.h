@@ -27,7 +27,7 @@ static inline void waitdisk(void) {
 /* readsect - read a single sector at @secno into @dst */
 static void readsect(uintptr_t dst, uint32_t secno) {
 
-	disable();
+	disable(); // IMPORTANT!!!
     port_byte_out(0x1F2, 1);                         // count = 1
     port_byte_out(0x1F3, secno & 0xFF);
     port_byte_out(0x1F4, (secno >> 8) & 0xFF);
@@ -39,7 +39,7 @@ static void readsect(uintptr_t dst, uint32_t secno) {
 
     // read a sector
     insw(0x1F0, dst, SECTSIZE / 2);
-    enable();
+    enable(); // IMPORTANT!!!
 }
 
 // read [@startsec,@startsec+@cnt] sectors to @addr

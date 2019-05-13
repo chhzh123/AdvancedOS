@@ -68,12 +68,6 @@ void hal_initialize(){
 	pit_init();
 	pit_start_counter(100, PIT_OCW_COUNTER_0, PIT_OCW_MODE_SQUAREWAVEGEN);
 	put_info("Initialized PIT");
-
-	/*
-	 * task state segment (TSS) initialization
-	 */
-	// tss_init();
-	// put_info("Initialized TSS");
 }
 
 void generate_interrupt(int n){
@@ -90,24 +84,6 @@ void generate_interrupt(int n){
 void sleep (int ms) {
 	int ticks = ms + get_tick_count ();
 	while (ticks > get_tick_count ());
-}
-
-extern void enter_usermode(); // assembly
-
-void user_mode() {
-	int stack = 0;
-
-	__asm__ (
-			"mov eax, esp"
-			:"=a"(stack)
-			:
-			);
-
-	tss_set_stack (0x10,stack);
-
-	enter_usermode();
-
-	put_info("We are in user mode!");
 }
 
 #endif // HAL_H
