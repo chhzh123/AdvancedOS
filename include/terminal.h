@@ -22,7 +22,6 @@ These shell commands are defined internally. Type 'help' to see this list.\n\
  tick       -- Show current execution time\n\
  read       -- Read disk and print out\n\
  user       -- Enter user mode\n\
- exec       -- Execute all the user programs\n\
  exec [num] -- Execute the num-th program\n\
  clr        -- Clear the screen\n\
  exit       -- Exit OS\n";
@@ -56,13 +55,20 @@ void terminal()
 			break;
 		else if (strcmp(str,"clr") == 0)
 			clear_screen();
+		else if (strcmp(str,"show") == 0)
+			show_user_prg();
 		else if (strcmp(str,"tick") == 0)
 			printf("%d\n",get_tick_count());
 		else if (strcmp(str,"read") == 0)
 			read_disk_test();
-		else if (strcmp(str,"user") == 0)
-			user_mode();
-		else
+		else if (strlen(str) >= 4){
+			char cpystr[MAX_BUF_LEN];
+			strncpy(cpystr,str,4);
+			if (strcmp(cpystr,"exec") == 0){
+				exec_user_prg(str[5] - '1');
+			} else
+				command_not_found(str);
+		} else
 			command_not_found(str);
 	}
 }

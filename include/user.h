@@ -18,14 +18,45 @@
 
 extern void enter_usermode(uintptr_t addr); // assembly
 
-uintptr_t test_user_function;
-// void test_user_function()
-// {
-// 	int a = 1, b = 1;
-// 	printf("a + b = %d + %d = %d\n", a, b, a + b);
-// }
+typedef struct Program{
+	char name[8];
+	int space;
+	char pos[8];
+	char description[50];
+} Program;
 
-void user_mode() {
+#define PRG_NUM 5
+#define PrgSectorOffset 0
+Program prgs[PRG_NUM];
+
+uintptr_t test_user_function;
+
+void show_user_prg(){
+	for (int i = 0; i < PRG_NUM; ++i){
+		char str[10];
+		itoa(i+1,str,10);
+		strcpy(prgs[i].name,str);
+		prgs[i].space = 512;
+		strcpy(prgs[i].pos,"/");
+		switch (i+1){
+			case 1: strcpy(prgs[i].description,"Quadrant 1: Flying single char"); break;
+			case 2: strcpy(prgs[i].description,"Quadrant 2: Flying two chars - V shape"); break;
+			case 3: strcpy(prgs[i].description,"Quadrant 3: Flying two chars - OS"); break;
+			case 4: strcpy(prgs[i].description,"Quadrant 4: Flying two chars - parallelogram"); break;
+			case 5: strcpy(prgs[i].description,"Draw the box"); break;
+		}
+	}
+	printf("Name  Size  Pos  Description\n");
+	for (int i = 0; i < PRG_NUM; ++i)
+		printf("%s %d %s %s\n", prgs[i].name, prgs[i].space, prgs[i].pos, prgs[i].description);
+}
+
+void exec_user_prg(int num) {
+	if (!(num > 0 && num < PRG_NUM+1)){
+		put_error("Error: No this program!");
+		return;
+	}
+
 	int stack = 0;
 
 	__asm__ volatile (
@@ -36,7 +67,7 @@ void user_mode() {
 
 	tss_set_stack(KERNEL_DS,stack+KERNEL_STACK_SIZE);
 
-	read_sectors(USER_ADDR,0,2);
+	read_sectors(USER_ADDR,num*2,2);
 
 	void* new_addr = (void*)NEW_USER_ADDR;
 	memcpy(new_addr,(const void*)USER_ADDR,SECTSIZE*2);
