@@ -12,8 +12,6 @@
 #include "ide.h"
 #include "string.h"
 
-#define USER_ADDR 0x1000
-#define NEW_USER_ADDR 0x20000
 #define KERNEL_STACK_SIZE 2048       // Use a 2kb kernel stack
 
 extern void enter_usermode(uintptr_t addr); // assembly
@@ -28,8 +26,6 @@ typedef struct Program{
 #define PRG_NUM 5
 #define PrgSectorOffset 0
 Program prgs[PRG_NUM];
-
-uintptr_t test_user_function;
 
 void show_user_prg(){
 	for (int i = 0; i < PRG_NUM; ++i){
@@ -51,6 +47,28 @@ void show_user_prg(){
 		printf("%s %d %s %s\n", prgs[i].name, prgs[i].space, prgs[i].pos, prgs[i].description);
 }
 
+void create_user_proc() {
+	int stack = 0;
+
+	__asm__ volatile (
+			"mov eax, esp"
+			:"=a"(stack)
+			:
+			);
+
+	tss_set_stack(USER_DS,ADDR_USER_START+PROC_SIZE);
+
+	proc_create(USER_CS,USER_DS,ADDR_USER_START);
+	read_sectors(ADDR_USER_START,0,2);
+	// proc_create(USER_CS,USER_DS,ADDR_USER_START+PROC_SIZE);
+	// read_sectors(ADDR_USER_START+PROC_SIZE+64,2,2);
+	// put_info("Create user process 2");
+
+	// enter_usermode((uintptr_t)ADDR_USER_START);
+
+	put_info("Finish user mode!");
+}
+
 void exec_user_prg(int num) {
 	if (!(num > 0 && num < PRG_NUM+1)){
 		put_error("Error: No this program!");
@@ -67,13 +85,10 @@ void exec_user_prg(int num) {
 
 	tss_set_stack(KERNEL_DS,stack+KERNEL_STACK_SIZE);
 
-	read_sectors(USER_ADDR,num*2,2);
-
-	void* new_addr = (void*)NEW_USER_ADDR;
-	memcpy(new_addr,(const void*)USER_ADDR,SECTSIZE*2);
+	read_sectors(ADDR_USER_START,(num-1)*2,2);
 
 #ifdef DEBUG
-	uint8_t* sector = (uint8_t*)new_addr;
+	uint8_t* sector = (uint8_t*)ADDR_USER_START;
 	int i = 0;
 	for (int c = 0; c < 4; c++ ) {
 		for (int j = 0; j < 128; j++){
@@ -88,9 +103,10 @@ void exec_user_prg(int num) {
 
 	put_info("Begin entering user mode...");
 
+#ifndef DEBUG
 	clear_screen();
-	test_user_function = NEW_USER_ADDR;
-	enter_usermode(test_user_function);
+#endif
+	enter_usermode((uintptr_t)ADDR_USER_START);
 
 	put_info("Finish user mode!");
 }

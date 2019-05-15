@@ -61,11 +61,13 @@ void terminal()
 			printf("%d\n",get_tick_count());
 		else if (strcmp(str,"read") == 0)
 			read_disk_test();
+		else if (strcmp(str,"exec") == 0)
+			create_user_proc();
 		else if (strlen(str) >= 4){
 			char cpystr[MAX_BUF_LEN];
 			strncpy(cpystr,str,4);
 			if (strcmp(cpystr,"exec") == 0){
-				exec_user_prg(str[5] - '1');
+				exec_user_prg(str[5] - '0');
 			} else
 				command_not_found(str);
 		} else

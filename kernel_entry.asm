@@ -20,14 +20,32 @@ _start:
 
 load_gdt:
 	lgdt [ _gdtr ]
-	mov ax, 0x10                ; kernel mode
-	mov ds, ax                  ; so we point our segment registers to the
+	mov ax, 0x10                ; kernel data selector
+	mov ds, ax
 	mov es, ax
 	mov fs, ax
 	mov gs, ax
-	mov ss, ax                  ; data selector we defined in our GDT
+	mov ss, ax
 	jmp 0x08:load_gdt_ret
 load_gdt_ret:
+	ret
+
+;;;;; Show infrastructure ;;;;;
+
+[ global show_static_string ]
+%include "include/show.inc"
+
+show_static_string:
+	push ebp
+	mov ebp, esp
+	push ecx
+	push edx
+	mov ecx, [ ebp + 8 ] ; argment 1 (string address)
+	mov dh, byte [ ebp + 12 ] ; argment 2 (row)
+	show_string_pm ecx, dh, 0
+	pop edx
+	pop ecx
+	pop ebp
 	ret
 
 ;;;;; Interrupt ;;;;;
@@ -35,8 +53,10 @@ load_gdt_ret:
 [ global load_idt ]
 [ global keyboard_handler ]
 [ global pit_handler ]
+[ global sys_interrupt_handler ]
 [ extern keyboard_handler_main ]
 [ extern pit_handler_main ]
+[ extern sys_interrupt_handler_main ]
 
 load_idt:
 	mov edx, [ esp + 4 ]
@@ -45,17 +65,26 @@ load_idt:
 	ret
 
 keyboard_handler:
+	cli
 	call    keyboard_handler_main
+	sti
 	iretd               ; 32-bit return
 
 pit_handler:
+	cli
 	call pit_handler_main
+	sti
+	iretd
+
+sys_interrupt_handler:
+	cli
+	call sys_interrupt_handler_main
+	sti
 	iretd
 
 ;;;;; user mode ;;;;;
 
 [ global enter_usermode ]
-[ extern test_user_function ]
 
 ; | ss     | ; esp+16: the stack segment selector we want for user mode
 ; | esp    | ; esp+12: the user mode stack pointer
@@ -77,8 +106,90 @@ enter_usermode:
 	mov eax, esp
 	push 0x23		; SS, notice it uses same selector as above
 	push eax		; ESP
-	pushf			; EFLAGS
+
+	pushf			; EFLAGS, remember to set up INTERRUPTS!!!
+	pop eax         ; Get EFLAGS back into EAX. The only way to read EFLAGS is to pushf then pop
+	or eax, 0x200   ; Set the IF flag
+	push eax        ; Push the new EFLAGS value back onto the stack
 
 	push 0x1b		; CS, user mode code selector is 0x18 (GDT 3). With RPL 3 is 0x1b
-	push ecx ; EIP
+	push ecx        ; EIP
 	iret
+
+
+;;;;; Process ;;;;;
+
+; [ extern curr_proc ]
+[ global save_proc_entry ]
+[ extern save_proc ]
+[ global restart_proc ]
+
+save_proc_entry:
+	pusha ; ax,cx,dx,bx,sp,bp,si,di
+	push ds
+	push es
+	push fs
+	push gs
+
+	push ax
+	mov ax, 0x10
+	mov ds, ax
+	pop ax
+
+	push esp
+	call save_proc
+	pop esp
+
+	pop gs
+	pop fs
+	pop es
+	pop ds
+	popa
+	ret
+
+restart_proc:
+	cli
+	add esp, 4
+	pop eax      ; ds
+	mov ds, ax
+	mov es, ax
+	mov fs, ax
+	mov gs, ax
+
+	; | ss     | ; esp+16
+	; | esp    | ; esp+12
+	; | eflags | ; esp+8
+	; | cs     | ; esp+4
+	; | eip    | ; esp
+	iret ; flush cs:eip
+
+;;;;;
+; The DIV instruction (and it's counterpart IDIV for signed numbers)
+; gives both the quotient and remainder (modulo).
+; DIV r16 divides a 32-bit number in DX:AX by a 16-bit operand and
+; stores the quotient in AX and the remainder in DX.
+; e.g.
+; mov dx, 0
+; mov ax, 1234
+; mov bx, 10
+; div bx       ; Divides 1234 by 10. DX = 4 and AX = 123
+;;;;;
+; int_to_str: ; reverse!
+; 	; ax: input number
+; 	mov ecx, numstr
+; int_to_str_loop:
+; 	mov ebx, 10
+; 	div ebx
+; 	add dl, '0'
+; 	mov byte [ ecx ], dl
+; 	inc ecx
+; 	cmp eax, 0
+; 	jne int_to_str_loop
+; 	mov byte [ ecx ], 0
+; 	show_string_pm msg, 15, 0
+; 	jmp $
+; 	ret
+
+testdata:
+	msg db "This is a test message!", 0
+; 	numstr db "                ", 0

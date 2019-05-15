@@ -22,6 +22,7 @@ USRDIR = usr
 USR = prg1.com prg2.com prg3.com prg4.com box.com
 
 ifdef DEBUG
+CCFLAGS += -DDEBUG
 DEBUGFILES = kernel.s
 endif
 
@@ -68,4 +69,4 @@ bochs:
 .PHONY : clean
 clean :
 	-rm -rf $(BUILD)
-	-rm -f *.o *.bin *.com *.elf *.s $(IMG) $(HARDDISK) $(PROGS) *.lock
+	-rm -f *.o *.bin *.com *.elf *.s $(IMG) $(HARDDISK) $(PROGS) *.lock bochsout.txt

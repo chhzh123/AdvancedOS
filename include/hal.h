@@ -15,6 +15,8 @@
 #include "pit.h"
 #include "ide.h"
 
+extern void sys_interrupt_handler ();
+
 void hal_initialize(){
 	printf("\n\n\n");
 	/*
@@ -47,6 +49,9 @@ void hal_initialize(){
 	setvect (17, (unsigned long) alignment_check_fault);
 	setvect (18, (unsigned long) machine_check_abort);
 	setvect (19, (unsigned long) simd_fpu_fault);
+
+	// install my own interrupts
+	setvect (0x80, (unsigned long) sys_interrupt_handler);
 
 	put_info("Initialized IDT");
 
@@ -84,6 +89,10 @@ void generate_interrupt(int n){
 void sleep (int ms) {
 	int ticks = ms + get_tick_count ();
 	while (ticks > get_tick_count ());
+}
+
+void sys_interrupt_handler_main () {
+	sleep(1000);
 }
 
 #endif // HAL_H

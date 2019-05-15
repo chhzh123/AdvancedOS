@@ -388,6 +388,7 @@ void put_error(char* str)
 {
 	set_color(RED,BLACK);
 	print(str);
+	print("\n");
 	set_color(WHITE,BLACK);
 }
 
@@ -402,5 +403,7 @@ void put_info(char* str)
 	print(str);
 	print("\n");
 }
+
+extern void show_static_string(char* str,int row); // assembly
 
 #endif // STDIO_H

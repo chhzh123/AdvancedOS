@@ -56,9 +56,9 @@ out_delay equ 6000  ; outer loop
 %endmacro
 
 mainloop:
+	show_string_color msg, 5, 4, 03h
 	call delayloop
 	OneChar px, py, drt, char, color
-	show_string_color msg, 5, 4, 03h
 	mov ax, word [ cnt ]
 	dec ax
 	mov word [ cnt ], ax

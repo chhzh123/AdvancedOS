@@ -51,17 +51,7 @@
 static volatile uint32_t			pit_ticks = 0;
 
 // Test if pit is initialized
-static bool							pit_bIsInit=false;
-
-//	pit timer interrupt handler
-void pit_handler_main () {
-
-	// increment tick count
-	pit_ticks++;
-
-	// tell hal we are done
-	interruptdone(0);
-}
+static bool							pit_bIsInit = false;
 
 // Sets new pit tick count and returns prev. value
 uint32_t pit_set_tick_count (uint32_t i) {

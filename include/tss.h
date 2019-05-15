@@ -61,7 +61,7 @@ void tss_install (uint32_t sel) {
 			);
 }
 
-void tss_set_stack (uint16_t kernelSS, uint16_t kernelESP) {
+void tss_set_stack (uint32_t kernelSS, uint32_t kernelESP) {
 
 	// memset((void *)&tss, 0, sizeof(tss));
 	tss.ss0 = kernelSS;

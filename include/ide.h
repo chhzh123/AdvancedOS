@@ -8,6 +8,9 @@
 #define IDE_H
 
 #define SECTSIZE 512
+#define TMP_USER_ADDR 0x1000
+
+#include "string.h"
 
 static inline void insw(uint32_t port, uintptr_t addr, int cnt) {
     __asm__ volatile (
@@ -45,8 +48,10 @@ static void readsect(uintptr_t dst, uint32_t secno) {
 // read [@startsec,@startsec+@cnt] sectors to @addr
 static void read_sectors(uintptr_t addr, uint32_t startsec, uint32_t cnt)
 {
-	for (int i = 0; i < cnt; ++i)
-		readsect(addr + i * SECTSIZE, startsec + i);
+	for (int i = 0; i < cnt; ++i){
+		readsect(TMP_USER_ADDR + i * SECTSIZE, startsec + i);
+		memcpy((void*)addr, (const void*)TMP_USER_ADDR, cnt * SECTSIZE);
+	}
 }
 
 void read_disk_test(){
