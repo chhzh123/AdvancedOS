@@ -25,7 +25,7 @@ void initialize()
 void main () {
 	initialize();
 	clear_screen();
-	sleep(100);
+	sleep(50);
 	create_user_proc();
 	enable();
 	// exec_user_prg(1);

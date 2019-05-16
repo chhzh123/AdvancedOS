@@ -70,9 +70,10 @@ keyboard_handler:
 	sti
 	iretd               ; 32-bit return
 
-pit_handler:
+pit_handler:            ; handle process switching
 	cli
-	call pit_handler_main
+	jmp save_proc_entry ; DO NOT USE CALL!!! WILL DESTROY STACK
+save_proc_entry_ret:
 	sti
 	iretd
 
@@ -119,11 +120,26 @@ enter_usermode:
 
 ;;;;; Process ;;;;;
 
-; [ extern curr_proc ]
 [ global save_proc_entry ]
 [ extern save_proc ]
 [ global restart_proc ]
 
+; | eflags | ; esp+8
+; | cs     | ; esp+4
+; | eip    | ; esp *** ORIGINAL ESP ***
+; | ax     |
+; | cx     |
+; | dx     |
+; | bx     |
+; | sp     | ; original esp
+; | bp     |
+; | si     |
+; | di     |
+; | ds     |
+; | es     |
+; | fs     |
+; | gs     |
+; | ret-add| ; pit_handler_main
 save_proc_entry:
 	pusha ; ax,cx,dx,bx,sp,bp,si,di
 	push ds
@@ -131,21 +147,14 @@ save_proc_entry:
 	push fs
 	push gs
 
-	push ax
-	mov ax, 0x10
-	mov ds, ax
-	pop ax
-
-	push esp
-	call save_proc
-	pop esp
+	call pit_handler_main
 
 	pop gs
 	pop fs
 	pop es
 	pop ds
 	popa
-	ret
+	jmp save_proc_entry_ret
 
 restart_proc:
 	cli

@@ -236,6 +236,58 @@ int read_int(const char* s, int* readNum) {
     return cnt;
 }
 
+void sprintf(char* buf, const char* format, ...) {
+	int narg = 0;
+	int i = 0;
+	int padding = 0;
+	for (i = 0; format[i]; i++)
+		if (format[i] == '%')
+			narg++;
+
+	va_list valist;
+	va_start(valist, format);
+
+	for (i = 0; format[i]; ++i) {
+		int digitLength = 0;
+		if (format[i] == '%') {
+			if ((format[i+1] >= '0' && format[i+1] <= '9') || (format[i+1] == '-')) {
+				digitLength = read_int(format + i + 1,&padding);
+			}
+			if (format[i + digitLength + 1] == 'd' || format[i + digitLength + 1] == 'i') {
+				int data = va_arg(valist, int);
+				char str[MAX_BUF_LEN];
+				itoa(data,str,10);
+				strcat(buf,str);
+			} else if (format[i + digitLength + 1] == 'x' || format[i + digitLength + 1] == 'X') {
+				int data = va_arg(valist, int);
+				char str[MAX_BUF_LEN];
+				itoa(data,str,16);
+				strcat(buf,str);
+			} else if (format[i+ digitLength + 1] == 'c') {
+				int c = va_arg(valist, int); // va_arg uses int instead of char
+				char str[2];
+				str[0] = c; str[1] = '\0';
+				strcat(buf,str);
+			} else if (format[i + digitLength + 1] == 's') {
+				char* str = va_arg(valist, char*);
+				strcat(buf,str);
+			} else if (format[i + digitLength + 1] == '%'){
+				strcat(buf,"%");
+			}
+			i += 1 + digitLength;
+			continue;
+		} else if (format[i] == '\n' || format[i] == '\r') {
+			strcat(buf,"\n");
+		} else {
+			char str[2];
+			str[0] = format[i]; str[1] = '\0';
+			strcat(buf,str);
+		}
+	}
+
+	va_end(valist);
+}
+
 void printf(const char* format, ...){
 	int narg = 0;
 	int i = 0;

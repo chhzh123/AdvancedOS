@@ -9,6 +9,13 @@
 
 #include "stdio.h"
 
+/*
+ * | eflags | esp+12
+ * |   cs   | esp+8
+ * |   eip  | esp+4
+ * |  error | esp
+ */
+
 // divide by 0 fault
 __attribute__((__cdecl__))
 void divide_by_zero_fault (unsigned int cs, unsigned int eip, unsigned int eflags) {
@@ -53,8 +60,10 @@ void bounds_check_fault (unsigned int cs, unsigned int eip, unsigned int eflags)
 
 // invalid opcode / instruction
 __attribute__((__cdecl__))
-void invalid_opcode_fault (unsigned int cs, unsigned int eip, unsigned int eflags) {
-	put_error("Exception: Invalid opcode");
+void invalid_opcode_fault (unsigned int cs, unsigned int eflags, unsigned int eip) {
+	char str[100];
+	sprintf(str,"Exception: Invalid opcode\ncs:eip=%xh:%xh, eflags=%xh",cs,eip,eflags);
+	put_error(str);
 	for (;;);
 }
 
@@ -95,8 +104,10 @@ void stack_fault ( unsigned int cs,unsigned int err, unsigned int eip, unsigned 
 
 // general protection fault
 __attribute__((__cdecl__))
-void general_protection_fault (unsigned int cs,unsigned int err, unsigned int eip, unsigned int eflags) {
-	put_error("Exception: General Protection Fault");
+void general_protection_fault (unsigned int err, unsigned int cs, unsigned int eflags, unsigned int eip) {
+	char str[100];
+	sprintf(str,"Exception: General Protection Fault\ncs:eip=%xh:%xh, eflags=%xh, err=%xh",cs,eip,eflags,err);
+	put_error(str);
 	for (;;);
 }
 

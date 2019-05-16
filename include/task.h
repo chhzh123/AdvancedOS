@@ -27,7 +27,7 @@
 #define PRIOR_USER 0x1
 
 #define MAX_PROCESS 5
-#define MAX_TICK 300
+#define MAX_TICK 100
 
 enum PROC_STATUS
 {
@@ -146,28 +146,6 @@ void proc_init()
 	// curr_proc = proc_create(USER_CS,USER_DS,ADDR_USER_START);
 }
 
-void save_proc(regs* r)
-{
-	curr_proc->regImg.eax = r->eax;
-	curr_proc->regImg.ecx = r->ecx;
-	curr_proc->regImg.edx = r->edx;
-	curr_proc->regImg.ebx = r->ebx;
-
-	curr_proc->regImg.esp = r->esp + 0xc; // 12=3*4 remove stack elements caused by `call`
-	curr_proc->regImg.ebp = r->ebp;
-	curr_proc->regImg.esi = r->esi;
-	curr_proc->regImg.edi = r->edi;
-
-	curr_proc->regImg.ds = r->ds & 0xFFFF;
-	curr_proc->regImg.es = r->es & 0xFFFF;
-	curr_proc->regImg.fs = r->fs & 0xFFFF;
-	curr_proc->regImg.gs = r->gs & 0xFFFF;
-
-	curr_proc->regImg.eip = r->eip;
-	curr_proc->regImg.cs = r->cs;
-	curr_proc->regImg.eflags = r->eflags;
-}
-
 process* proc_pick()
 {
 	if (curr_pid == 0)
@@ -201,9 +179,8 @@ void enter_usermode(uintptr_t addr);
 
 void proc_switch(process* pp)
 {
-	if (curr_proc != NULL){
+	if (!(curr_proc == NULL && curr_pid == 1)){
 		curr_proc->status = PROC_SLEEP;
-		// save_proc_entry();
 	}
 #ifdef DEBUG
 	put_info("In proc_switch");
@@ -231,14 +208,14 @@ void proc_switch(process* pp)
 	enable();
 	restart_proc(
 		pp->regImg.ds,
-		pp->regImg.eip,
+		// pp->regImg.eip,
+		ADDR_USER_START,
 		pp->regImg.cs,
 		pp->regImg.eflags,
 		pp->regImg.user_esp,
 		pp->regImg.ss
 		);
 
-	enter_usermode((uintptr_t)ADDR_USER_START);
 #ifdef DEBUG
 	char str[10];
 	strcpy(str,"Done switch!");
@@ -256,8 +233,12 @@ void schedule_proc() // round-robin
 }
 
 // pit timer interrupt handler
-void pit_handler_main () {
-
+void pit_handler_main(
+	uint32_t gs,uint32_t fs,uint32_t es,uint32_t ds,
+	uint32_t di,uint32_t si,uint32_t bp,uint32_t sp,
+	uint32_t bx,uint32_t dx,uint32_t cx,uint32_t ax,
+	uint32_t ip,uint32_t cs,uintptr_t flags)
+{
 	// increment tick count
 	pit_ticks++;
 
@@ -269,7 +250,7 @@ void pit_handler_main () {
 
 	if (curr_proc == NULL){
 		if (curr_pid == 1)
-			schedule_proc();
+			schedule_proc(); // no need to save
 		interruptdone(0);
 		return;
 	}
@@ -290,6 +271,37 @@ void pit_handler_main () {
 		interruptdone(0);
 		return;
 	}
+
+#ifdef DEBUG
+	put_info("In save_proc");
+#endif
+	curr_proc->regImg.eip = ip+1;
+	curr_proc->regImg.cs = cs;
+	curr_proc->regImg.eflags = flags;
+
+	curr_proc->regImg.eax = ax;
+	curr_proc->regImg.ecx = cx;
+	curr_proc->regImg.edx = dx;
+	curr_proc->regImg.ebx = bx;
+
+	curr_proc->regImg.esp = sp + 0xc; // 12
+	curr_proc->regImg.ebp = bp;
+	curr_proc->regImg.esi = si;
+	curr_proc->regImg.edi = di;
+
+	curr_proc->regImg.ds = ds & 0xFFFF;
+	curr_proc->regImg.es = es & 0xFFFF;
+	curr_proc->regImg.fs = fs & 0xFFFF;
+	curr_proc->regImg.gs = gs & 0xFFFF;
+
+	curr_proc->regImg.ss = curr_proc->regImg.ds;
+	curr_proc->regImg.user_esp = curr_proc->regImg.esp;
+#ifdef DEBUG
+	printf("CS:%xh DS:%xh ES:%xh FS:%xh GS:%xh SS:%xh\n",
+		cs, ds, es, fs, gs, ds);
+	printf("EIP:%xh EFLAGS:%xh USER_ESP:%xh EBP:%xh\n",
+		ip, flags, sp, bp);
+#endif
 
 	schedule_proc(); // change another process
 
