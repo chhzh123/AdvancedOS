@@ -116,15 +116,24 @@
 #define PIC_ICW4_SFNM_NESTEDMODE	0x10		//10000
 #define PIC_ICW4_SFNM_NOTNESTED		0			//a binary 2 (futurama joke hehe ;)
 
+// // enable all hardware interrupts
+// void enable () {
+// 	__asm__ ("sti\n\r");
+// }
+
+// // disable all hardware interrupts
+// void disable () {
+// 	__asm__ ("cli\n\r");
+// }
+
 // enable all hardware interrupts
-void enable () {
-	__asm__ ("sti\n\r");
+static inline void enable () {
+	__asm__ volatile ("sti\n\r");
 }
 
-
 // disable all hardware interrupts
-void disable () {
-	__asm__ ("cli\n\r");
+static inline void disable () {
+	__asm__ volatile ("cli\n\r":::"memory");
 }
 
 // send command to PICs

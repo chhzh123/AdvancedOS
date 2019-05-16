@@ -25,7 +25,10 @@ void initialize()
 void main () {
 	initialize();
 	clear_screen();
-	// create_user_proc();
-	// while(1){};
+	sleep(100);
+	create_user_proc();
+	enable();
+	// exec_user_prg(1);
+	while(1){}
 	terminal();
 }

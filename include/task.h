@@ -9,6 +9,7 @@
 
 #include "stdio.h"
 #include "gdt.h"
+#include "tss.h"
 #include <stdint.h>
 
 /*
@@ -19,7 +20,8 @@
 // #define ADDR_USER_START   0x00400000
 #define ADDR_USER_START   0x0020000
 // #define ADDR_KERNEL_START 0x80000000
-#define PROC_SIZE 0x10000 // 64k
+// #define PROC_SIZE 0x10000 // 64k
+#define PROC_SIZE 0x400 // 1k
 
 #define PRIOR_SYS  0x2
 #define PRIOR_USER 0x1
@@ -112,18 +114,21 @@ process* proc_create(uint32_t cs, uint32_t ds, uintptr_t addr)
 	pp->regImg.fs = pp->regImg.ds;
 	pp->regImg.gs = pp->regImg.ds;
 	pp->regImg.ss = pp->regImg.ds;
-	pp->regImg.eflags = 0x200;
+	uint32_t flag;
+	asm volatile ("pushf\n\t"
+				  "pop eax\n\t"
+				  :"=a"(flag)
+				  :
+				 );
+	pp->regImg.eflags = flag | 0x200; // interrupt
 	pp->regImg.eip = addr;
-	pp->regImg.esp = pp->regImg.ebp = pp->regImg.user_esp = addr + PROC_SIZE; // reset
+	pp->regImg.esp
+		= pp->regImg.ebp
+		= pp->regImg.user_esp
+		= addr + PROC_SIZE; // reset
 	reset_time(pp);
-	enable();
 #ifdef DEBUG
 	printf("Create process %d!\n", curr_pid);
-	printf("CS:%xh DS:%xh ES:%xh FS:%xh GS:%xh\n",
-		pp->regImg.cs, pp->regImg.ds, pp->regImg.es,
-		pp->regImg.fs, pp->regImg.gs);
-	printf("EIP:%xh EFLAGS:%xh ESP:%xh EBP:%xh\n",
-		pp->regImg.eip, pp->regImg.eflags, pp->regImg.esp, pp->regImg.ebp);
 #endif
 	return pp;
 }
@@ -192,18 +197,38 @@ extern void restart_proc(
 	uint32_t ss
 	);
 
+void enter_usermode(uintptr_t addr);
+
 void proc_switch(process* pp)
 {
 	if (curr_proc != NULL){
 		curr_proc->status = PROC_SLEEP;
-		save_proc_entry();
+		// save_proc_entry();
 	}
+#ifdef DEBUG
 	put_info("In proc_switch");
+#else
+	else
+		clear_screen(); // the first process
+#endif
 	reset_time(pp);
+
 	pp->status = PROC_ACTIVE;
 	curr_proc = pp;
-	// restart_proc(curr_proc);
-	// eflags = 23, eip = 20000,cs = 1b, ds = 200
+#ifdef DEBUG
+	printf("CS:%xh DS:%xh ES:%xh FS:%xh GS:%xh SS:%xh\n",
+		pp->regImg.cs, pp->regImg.ds, pp->regImg.es,
+		pp->regImg.fs, pp->regImg.gs, pp->regImg.ss);
+	printf("EIP:%xh EFLAGS:%xh USER_ESP:%xh EBP:%xh\n",
+		pp->regImg.eip, pp->regImg.eflags,
+		pp->regImg.user_esp, pp->regImg.ebp);
+#endif
+	int stack = 0;
+	__asm__ volatile ("mov eax, esp":"=a"(stack)::);
+	tss_set_stack(KERNEL_DS,stack+KERNEL_STACK_SIZE);
+
+	interruptdone(0);
+	enable();
 	restart_proc(
 		pp->regImg.ds,
 		pp->regImg.eip,
@@ -212,6 +237,8 @@ void proc_switch(process* pp)
 		pp->regImg.user_esp,
 		pp->regImg.ss
 		);
+
+	enter_usermode((uintptr_t)ADDR_USER_START);
 #ifdef DEBUG
 	char str[10];
 	strcpy(str,"Done switch!");

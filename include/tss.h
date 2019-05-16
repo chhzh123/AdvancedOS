@@ -11,6 +11,8 @@
 #include "string.h"
 #include <stdint.h>
 
+#define KERNEL_STACK_SIZE 2048       // Use a 2kb kernel stack
+
 struct tss_entry {
 	uint32_t prevTss;
 	uint32_t esp0;

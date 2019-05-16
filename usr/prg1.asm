@@ -63,7 +63,7 @@ mainloop:
 	dec ax
 	mov word [ cnt ], ax
 	cmp ax, 0
-	jne mainloop
+	jge mainloop
 	ret
 
 delayloop:
@@ -184,6 +184,6 @@ datadef:
 	msg db 'This is Prg1!', 0
 	msglen equ ($-msg)
 
-	cnt db 20               ; maximum iteration
+	cnt dw 1000               ; maximum iteration
 
 	TEST_MEG db 'This is a test message!', 0

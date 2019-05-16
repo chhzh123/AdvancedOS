@@ -31,6 +31,7 @@ static inline void waitdisk(void) {
 static void readsect(uintptr_t dst, uint32_t secno) {
 
 	disable(); // IMPORTANT!!!
+
     port_byte_out(0x1F2, 1);                         // count = 1
     port_byte_out(0x1F3, secno & 0xFF);
     port_byte_out(0x1F4, (secno >> 8) & 0xFF);
@@ -42,16 +43,31 @@ static void readsect(uintptr_t dst, uint32_t secno) {
 
     // read a sector
     insw(0x1F0, dst, SECTSIZE / 2);
-    enable(); // IMPORTANT!!!
 }
 
 // read [@startsec,@startsec+@cnt] sectors to @addr
 static void read_sectors(uintptr_t addr, uint32_t startsec, uint32_t cnt)
 {
-	for (int i = 0; i < cnt; ++i){
+	for (int i = 0; i < cnt; i++){
 		readsect(TMP_USER_ADDR + i * SECTSIZE, startsec + i);
 		memcpy((void*)addr, (const void*)TMP_USER_ADDR, cnt * SECTSIZE);
 	}
+}
+
+void show_one_sector(uintptr_t addr)
+{
+	printf("Addr: %xh\n", addr);
+	uint8_t* sector = (uint8_t*) addr;
+	int i = 0;
+	for (int c = 0; c < 4; c++ ) {
+		for (int j = 0; j < 128; j++){
+			printf ("%x", sector[ i + j ]);
+			if (j % 2 == 1)
+				printf(" ");
+		}
+		i += 128;
+	}
+	printf("\n");
 }
 
 void read_disk_test(){
@@ -63,16 +79,7 @@ void read_disk_test(){
 	read_sectors((uintptr_t)sector, num, 1);
 	// display sector
 	printf("Address: %x\n", (uintptr_t)sector);
-	int i = 0;
-	for (int c = 0; c < 4; c++ ) {
-		for (int j = 0; j < 128; j++){
-			printf ("%x", sector[ i + j ]);
-			if (j % 2 == 1)
-				printf(" ");
-		}
-		i += 128;
-	}
-	printf("\n");
+	show_one_sector(0x1000);
 }
 
 #endif // IDE_H

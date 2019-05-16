@@ -156,12 +156,17 @@ restart_proc:
 	mov fs, ax
 	mov gs, ax
 
+	mov eax, esp
+	add eax, 20
+	mov [ esp + 12 ], eax
+	; jmp $
+
 	; | ss     | ; esp+16
 	; | esp    | ; esp+12
 	; | eflags | ; esp+8
 	; | cs     | ; esp+4
 	; | eip    | ; esp
-	iret ; flush cs:eip
+	iretd ; flush cs:eip
 
 ;;;;;
 ; The DIV instruction (and it's counterpart IDIV for signed numbers)

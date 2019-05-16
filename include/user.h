@@ -12,8 +12,6 @@
 #include "ide.h"
 #include "string.h"
 
-#define KERNEL_STACK_SIZE 2048       // Use a 2kb kernel stack
-
 extern void enter_usermode(uintptr_t addr); // assembly
 
 typedef struct Program{
@@ -48,25 +46,23 @@ void show_user_prg(){
 }
 
 void create_user_proc() {
-	int stack = 0;
 
-	__asm__ volatile (
-			"mov eax, esp"
-			:"=a"(stack)
-			:
-			);
-
-	tss_set_stack(USER_DS,ADDR_USER_START+PROC_SIZE);
-
-	proc_create(USER_CS,USER_DS,ADDR_USER_START);
 	read_sectors(ADDR_USER_START,0,2);
-	// proc_create(USER_CS,USER_DS,ADDR_USER_START+PROC_SIZE);
-	// read_sectors(ADDR_USER_START+PROC_SIZE+64,2,2);
-	// put_info("Create user process 2");
+	proc_create(USER_CS,USER_DS,ADDR_USER_START);
+#ifdef DEBUG
+	disable();
+	show_one_sector(ADDR_USER_START);
+#endif
 
-	// enter_usermode((uintptr_t)ADDR_USER_START);
+// 	proc_create(USER_CS,USER_DS,ADDR_USER_START+PROC_SIZE);
+// 	read_sectors(ADDR_USER_START+PROC_SIZE,2,2);
 
-	put_info("Finish user mode!");
+// #ifdef DEBUG
+// 	disable();
+// 	show_one_sector(ADDR_USER_START+PROC_SIZE);
+// #endif
+
+	put_info("Finish creating user process!");
 }
 
 void exec_user_prg(int num) {
@@ -88,17 +84,7 @@ void exec_user_prg(int num) {
 	read_sectors(ADDR_USER_START,(num-1)*2,2);
 
 #ifdef DEBUG
-	uint8_t* sector = (uint8_t*)ADDR_USER_START;
-	int i = 0;
-	for (int c = 0; c < 4; c++ ) {
-		for (int j = 0; j < 128; j++){
-			printf ("%x", sector[ i + j ]);
-			if (j % 2 == 1)
-				printf(" ");
-		}
-		i += 128;
-	}
-	printf("\n");
+	show_one_sector(ADDR_USER_START);
 #endif
 
 	put_info("Begin entering user mode...");
