@@ -124,9 +124,37 @@ enter_usermode:
 [ extern save_proc ]
 [ global restart_proc ]
 
+;;;;;
+; From Intel manual p2880:
+; If the handler procedure is going to be executed
+; at the same privilege level as the interrupted procedure:
+; a. The processor saves the current state of the
+;    EFLAGS, CS, and EIP registers on the current stack
+; b. If an exception causes an error code to be saved,
+;    it is pushed on the current stack after the EIP value
+;
+; If the handler procedure is going to be executed at a
+; numerically lower privilege level, a stack switch occurs.
+; When the stack switch occurs:
+; a. The segment selector and stack pointer for the stack
+;    to be used by the handler are obtained from the TSS
+;    for the currently executing task.
+;    On this new stack, the processor pushes
+;    the stack segment selector and stack pointer
+;    of the interrupted procedure.
+; b. The processor then saves the current state of the
+;    EFLAGS, CS, and EIP registers on the new stack
+; c. If an exception causes an error code to be saved,
+;    it is pushed on the new stack after the EIP value.
+;;;;;
+; STACK CHANGE! (different privilege level)
+; | ss     |
+; | esp    |
+; NO STACK CHANGE! (the same privilege level)
 ; | eflags | ; esp+8
 ; | cs     | ; esp+4
 ; | eip    | ; esp *** ORIGINAL ESP ***
+; NO ERROR CODE!
 ; | ax     |
 ; | cx     |
 ; | dx     |
@@ -156,54 +184,39 @@ save_proc_entry:
 	popa
 	jmp save_proc_entry_ret
 
+; | ss     | ; esp+16
+; | esp    | ; esp+12
+; | eflags | ; esp+8
+; | cs     | ; esp+4
+; | eip    | ; esp (after `popa`)
+; | eax    |
+; | ecx    |
+; | edx    |
+; | ebx    |
+; | esp    |
+; | ebp    |
+; | esi    |
+; | edi    |
+; | ds     |
+; | es     |
+; | fs     |
+; | gs     | <- now esp
+; | ret-add|
 restart_proc:
 	cli
-	add esp, 4
-	pop eax      ; ds
-	mov ds, ax
-	mov es, ax
-	mov fs, ax
-	mov gs, ax
+	add esp, 4   ; skip return address
+	pop gs
+	pop fs
+	pop es
+	pop ds
+	popa
 
-	mov eax, esp
-	add eax, 20
-	mov [ esp + 12 ], eax
-	; jmp $
+	; push eax ; the stack is changed
+	; mov ax, [ esp + 20 ]
+	; mov ss, ax
+	; pop eax
 
-	; | ss     | ; esp+16
-	; | esp    | ; esp+12
-	; | eflags | ; esp+8
-	; | cs     | ; esp+4
-	; | eip    | ; esp
 	iretd ; flush cs:eip
-
-;;;;;
-; The DIV instruction (and it's counterpart IDIV for signed numbers)
-; gives both the quotient and remainder (modulo).
-; DIV r16 divides a 32-bit number in DX:AX by a 16-bit operand and
-; stores the quotient in AX and the remainder in DX.
-; e.g.
-; mov dx, 0
-; mov ax, 1234
-; mov bx, 10
-; div bx       ; Divides 1234 by 10. DX = 4 and AX = 123
-;;;;;
-; int_to_str: ; reverse!
-; 	; ax: input number
-; 	mov ecx, numstr
-; int_to_str_loop:
-; 	mov ebx, 10
-; 	div ebx
-; 	add dl, '0'
-; 	mov byte [ ecx ], dl
-; 	inc ecx
-; 	cmp eax, 0
-; 	jne int_to_str_loop
-; 	mov byte [ ecx ], 0
-; 	show_string_pm msg, 15, 0
-; 	jmp $
-; 	ret
 
 testdata:
 	msg db "This is a test message!", 0
-; 	numstr db "                ", 0

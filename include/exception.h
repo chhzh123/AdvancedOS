@@ -58,9 +58,15 @@ void bounds_check_fault (unsigned int cs, unsigned int eip, unsigned int eflags)
 	for (;;);
 }
 
+/*
+ * | eflags |
+ * | cs     |
+ * | eip    |
+ * | error  | <- esp
+ */ 
 // invalid opcode / instruction
 __attribute__((__cdecl__))
-void invalid_opcode_fault (unsigned int cs, unsigned int eflags, unsigned int eip) {
+void invalid_opcode_fault (unsigned int eip, unsigned int cs, unsigned int eflags) {
 	char str[100];
 	sprintf(str,"Exception: Invalid opcode\ncs:eip=%xh:%xh, eflags=%xh",cs,eip,eflags);
 	put_error(str);

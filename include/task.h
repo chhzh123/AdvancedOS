@@ -109,11 +109,12 @@ process* proc_create(uint32_t cs, uint32_t ds, uintptr_t addr)
 	disable();
 	process* pp = proc_alloc();
 	pp->regImg.cs = cs;
-	pp->regImg.ds = ds;
-	pp->regImg.es = pp->regImg.ds;
-	pp->regImg.fs = pp->regImg.ds;
-	pp->regImg.gs = pp->regImg.ds;
-	pp->regImg.ss = pp->regImg.ds;
+	pp->regImg.ds
+		= pp->regImg.es
+		= pp->regImg.fs
+		= pp->regImg.gs
+		= pp->regImg.ss
+		= ds;
 	uint32_t flag;
 	asm volatile ("pushf\n\t"
 				  "pop eax\n\t"
@@ -141,9 +142,6 @@ void proc_init()
 		proc_list[i].status = PROC_SLEEP;
 		proc_list[i].priority = PRIOR_USER;
 	}
-
-	// initialize the first process
-	// curr_proc = proc_create(USER_CS,USER_DS,ADDR_USER_START);
 }
 
 process* proc_pick()
@@ -167,7 +165,9 @@ extern void save_proc_entry(); // assembly
 // be careful of the order!!!
 __attribute__((__cdecl__))
 extern void restart_proc(
-	uint32_t ds,
+	uint32_t gs, uint32_t fs, uint32_t es, uint32_t ds,
+	uint32_t edi, uint32_t esi, uint32_t ebp, uint32_t esp,
+	uint32_t ebx, uint32_t edx, uint32_t ecx, uint32_t eax,
 	uint32_t eip,
 	uint32_t cs,
 	uint32_t eflags,
@@ -200,23 +200,24 @@ void proc_switch(process* pp)
 		pp->regImg.eip, pp->regImg.eflags,
 		pp->regImg.user_esp, pp->regImg.ebp);
 #endif
+	// set up kernel stack
 	int stack = 0;
 	__asm__ volatile ("mov eax, esp":"=a"(stack)::);
-	tss_set_stack(KERNEL_DS,stack+KERNEL_STACK_SIZE);
+	tss_set_stack(KERNEL_DS,stack);
 
 	interruptdone(0);
-	enable();
 	restart_proc(
-		pp->regImg.ds,
-		// pp->regImg.eip,
-		ADDR_USER_START,
+		pp->regImg.gs, pp->regImg.fs, pp->regImg.es, pp->regImg.ds,
+		pp->regImg.edi, pp->regImg.esi, pp->regImg.ebp, pp->regImg.esp,
+		pp->regImg.ebx, pp->regImg.edx, pp->regImg.ecx, pp->regImg.eax,
+		pp->regImg.eip,
 		pp->regImg.cs,
 		pp->regImg.eflags,
 		pp->regImg.user_esp,
 		pp->regImg.ss
 		);
 
-#ifdef DEBUG
+#ifdef DEBUG // should not return to here!
 	char str[10];
 	strcpy(str,"Done switch!");
 	show_static_string(str,20);
@@ -237,16 +238,15 @@ void pit_handler_main(
 	uint32_t gs,uint32_t fs,uint32_t es,uint32_t ds,
 	uint32_t di,uint32_t si,uint32_t bp,uint32_t sp,
 	uint32_t bx,uint32_t dx,uint32_t cx,uint32_t ax,
-	uint32_t ip,uint32_t cs,uintptr_t flags)
+	uint32_t ip,uint32_t cs,uintptr_t flags,
+	uint32_t user_esp, uint32_t ss)
 {
 	// increment tick count
 	pit_ticks++;
 
-#ifdef DEBUG
-	char str[10];
+	char str[100];
 	itoa(pit_ticks,str,10);
 	show_static_string(str,24);
-#endif
 
 	if (curr_proc == NULL){
 		if (curr_pid == 1)
@@ -256,14 +256,8 @@ void pit_handler_main(
 	}
 
 #ifdef DEBUG
-	itoa(curr_proc->pid,str,10);
-	char str2[50];
-	strcpy(str2,"Curr proc: ");
-	strcat(str2,str);
-	strcat(str2," time: ");
-	itoa(curr_proc->tick,str,10);
-	strcat(str2,str);
-	show_static_string(str2,22);
+	sprintf(str,"Curr proc: %d Rest of time: %d",curr_proc->pid,curr_proc->tick);
+	show_static_string(str,22);
 #endif
 
 	if (curr_proc->tick > 0){
@@ -272,10 +266,11 @@ void pit_handler_main(
 		return;
 	}
 
+	// save task
 #ifdef DEBUG
 	put_info("In save_proc");
 #endif
-	curr_proc->regImg.eip = ip+1;
+	curr_proc->regImg.eip = ip;
 	curr_proc->regImg.cs = cs;
 	curr_proc->regImg.eflags = flags;
 
@@ -284,7 +279,7 @@ void pit_handler_main(
 	curr_proc->regImg.edx = dx;
 	curr_proc->regImg.ebx = bx;
 
-	curr_proc->regImg.esp = sp + 0xc; // 12
+	curr_proc->regImg.esp = sp; 
 	curr_proc->regImg.ebp = bp;
 	curr_proc->regImg.esi = si;
 	curr_proc->regImg.edi = di;
@@ -294,13 +289,13 @@ void pit_handler_main(
 	curr_proc->regImg.fs = fs & 0xFFFF;
 	curr_proc->regImg.gs = gs & 0xFFFF;
 
-	curr_proc->regImg.ss = curr_proc->regImg.ds;
-	curr_proc->regImg.user_esp = curr_proc->regImg.esp;
+	curr_proc->regImg.ss = ss;
+	curr_proc->regImg.user_esp = user_esp;
 #ifdef DEBUG
 	printf("CS:%xh DS:%xh ES:%xh FS:%xh GS:%xh SS:%xh\n",
 		cs, ds, es, fs, gs, ds);
-	printf("EIP:%xh EFLAGS:%xh USER_ESP:%xh EBP:%xh\n",
-		ip, flags, sp, bp);
+	printf("EIP:%xh EFLAGS:%xh ESP:%xh EBP:%xh USER_ESP:%xh\n",
+		ip, flags, sp, bp, user_esp);
 #endif
 
 	schedule_proc(); // change another process

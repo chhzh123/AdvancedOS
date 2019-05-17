@@ -54,13 +54,18 @@
 #define GD_UDATA    ((SEG_UDATA) << 3)      // user data
 #define GD_TSS      ((SEG_TSS) << 3)        // task segment selector
 
+/*
+ * CPL: Current Privilege Level
+ * RPL: Request Privilege Level
+ * DPL: Descriptor Privilege Level
+ */
 #define DPL_KERNEL  (0)
 #define DPL_USER    (3)
 
 #define KERNEL_CS   ((GD_KTEXT) | DPL_KERNEL) // 0x08
 #define KERNEL_DS   ((GD_KDATA) | DPL_KERNEL) // 0x10
-#define USER_CS     ((GD_UTEXT) | DPL_USER)   // 0x18
-#define USER_DS     ((GD_UDATA) | DPL_USER)   // 0x20
+#define USER_CS     ((GD_UTEXT) | DPL_USER)   // 0x18 | 3
+#define USER_DS     ((GD_UDATA) | DPL_USER)   // 0x20 | 3
 
 #include "tss.h"
 
