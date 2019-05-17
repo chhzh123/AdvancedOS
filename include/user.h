@@ -47,20 +47,21 @@ void show_user_prg(){
 
 void create_user_proc() {
 
-	read_sectors(ADDR_USER_START,0,2);
-	proc_create(USER_CS,USER_DS,ADDR_USER_START);
-#ifdef DEBUG
-	disable();
-	show_one_sector(ADDR_USER_START);
-#endif
-
-// 	proc_create(USER_CS,USER_DS,ADDR_USER_START+PROC_SIZE);
-// 	read_sectors(ADDR_USER_START+PROC_SIZE,2,2);
-
+// 	read_sectors(ADDR_USER_START,0,2);
+// 	proc_create(USER_CS,USER_DS,ADDR_USER_START);
 // #ifdef DEBUG
 // 	disable();
-// 	show_one_sector(ADDR_USER_START+PROC_SIZE);
+// 	show_one_sector(ADDR_USER_START);
 // #endif
+
+	// proc_create(USER_CS,USER_DS,ADDR_USER_START+PROC_SIZE);
+	// read_sectors(ADDR_USER_START+PROC_SIZE,2,2);
+
+	// proc_create(USER_CS,USER_DS,ADDR_USER_START+PROC_SIZE*2);
+	// read_sectors(ADDR_USER_START+PROC_SIZE*2,4,2);
+
+	proc_create(USER_CS,USER_DS,ADDR_USER_START+PROC_SIZE*3);
+	read_sectors(ADDR_USER_START+PROC_SIZE*3,6,2);
 
 	put_info("Finish creating user process!");
 }
@@ -71,14 +72,9 @@ void exec_user_prg(int num) {
 		return;
 	}
 
+	// set up kernel stack
 	int stack = 0;
-
-	__asm__ volatile (
-			"mov eax, esp"
-			:"=a"(stack)
-			:
-			);
-
+	__asm__ volatile ("mov eax, esp":"=a"(stack)::);
 	tss_set_stack(KERNEL_DS,stack+KERNEL_STACK_SIZE);
 
 	read_sectors(ADDR_USER_START,(num-1)*2,2);

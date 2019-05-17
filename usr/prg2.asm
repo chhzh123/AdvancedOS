@@ -20,7 +20,7 @@ in_delay equ 60000 ; control the speed
 out_delay equ 6000  ; outer loop
 
 ;;; ***** REMEMBER TO MODIFY ***** ;;;
-	org 20000h              ; ORG (origin) is used to set the assembler location counter
+	org 30000h              ; ORG (origin) is used to set the assembler location counter
 
 	jmp mainloop
 
@@ -199,4 +199,4 @@ datadef:
 	msg db 'This is prg2!', 0
 	msglen equ ($-msg)
 
-	cnt db 30
+	cnt dw 1000

@@ -20,8 +20,7 @@
 // #define ADDR_USER_START   0x00400000
 #define ADDR_USER_START   0x0020000
 // #define ADDR_KERNEL_START 0x80000000
-// #define PROC_SIZE 0x10000 // 64k
-#define PROC_SIZE 0x400 // 1k
+#define PROC_SIZE 0x10000 // 64k
 
 #define PRIOR_SYS  0x2
 #define PRIOR_USER 0x1

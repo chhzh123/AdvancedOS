@@ -21,7 +21,7 @@ out_delay equ 6000  ; outer loop
 
 ; Disk Initialization
 ;;; ***** REMEMBER TO MODIFY ***** ;;;
-	org 20000h              ; ORG (origin) is used to set the assembler location counter
+	org 50000h              ; ORG (origin) is used to set the assembler location counter
 
 	jmp mainloop
 
@@ -200,4 +200,4 @@ datadef:
 	msg db 'This is prg4!', 0
 	msglen equ ($-msg)
 
-	cnt db 30
+	cnt dw 1000
