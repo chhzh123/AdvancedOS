@@ -26,7 +26,7 @@
 #define PRIOR_USER 0x1
 
 #define MAX_PROCESS 5
-#define MAX_TICK 100
+#define MAX_TICK 1
 
 enum PROC_STATUS
 {
@@ -178,7 +178,7 @@ void enter_usermode(uintptr_t addr);
 
 void proc_switch(process* pp)
 {
-	if (!(curr_proc == NULL && curr_pid == 1)){
+	if (!(curr_proc == NULL && curr_pid != 0)){
 		curr_proc->status = PROC_SLEEP;
 	}
 #ifdef DEBUG
@@ -248,7 +248,7 @@ void pit_handler_main(
 	show_static_string(str,24);
 
 	if (curr_proc == NULL){
-		if (curr_pid == 1)
+		if (curr_pid != 0)
 			schedule_proc(); // no need to save
 		interruptdone(0);
 		return;

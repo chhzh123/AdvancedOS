@@ -11,10 +11,10 @@ Up_Rt equ 2
 Up_Lt equ 3
 Dn_Lt equ 4
 MAX_X equ 80
-MAX_Y equ 13
+MAX_Y equ 12
 MIN_X equ 41
 MIN_Y equ 0
-msgX equ 10
+msgX equ 48
 msgY equ 5
 in_delay equ 60000 ; control the speed
 out_delay equ 6000  ; outer loop
@@ -58,7 +58,7 @@ out_delay equ 6000  ; outer loop
 %endmacro
 
 mainloop:
-	show_string_color msg, msgY, msgX, 03h
+	show_string_color msg, msgY, msgX, 05h
 	call delayloop
 	OneChar px1,py1,drt1,char1,color1
 	OneChar px2,py2,drt2,char2,color2

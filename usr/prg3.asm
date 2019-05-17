@@ -13,9 +13,9 @@ Dn_Lt equ 4
 MAX_X equ 40
 MAX_Y equ 25
 MIN_X equ 0
-MIN_Y equ 12
+MIN_Y equ 13
 msgX equ 10
-msgY equ 5
+msgY equ 20
 in_delay equ 60000 ; control the speed
 out_delay equ 6000  ; outer loop
 

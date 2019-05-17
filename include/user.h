@@ -47,23 +47,29 @@ void show_user_prg(){
 
 void create_user_proc() {
 
-// 	read_sectors(ADDR_USER_START,0,2);
-// 	proc_create(USER_CS,USER_DS,ADDR_USER_START);
-// #ifdef DEBUG
-// 	disable();
-// 	show_one_sector(ADDR_USER_START);
-// #endif
+	disable();
 
-	// proc_create(USER_CS,USER_DS,ADDR_USER_START+PROC_SIZE);
-	// read_sectors(ADDR_USER_START+PROC_SIZE,2,2);
+	read_sectors(ADDR_USER_START,0,2);
+	proc_create(USER_CS,USER_DS,ADDR_USER_START);
+	put_info("Created user process 1!");
 
-	// proc_create(USER_CS,USER_DS,ADDR_USER_START+PROC_SIZE*2);
-	// read_sectors(ADDR_USER_START+PROC_SIZE*2,4,2);
+	proc_create(USER_CS,USER_DS,ADDR_USER_START+PROC_SIZE);
+	read_sectors(ADDR_USER_START+PROC_SIZE,2,2);
+	put_info("Created user process 2!");
+
+	proc_create(USER_CS,USER_DS,ADDR_USER_START+PROC_SIZE*2);
+	read_sectors(ADDR_USER_START+PROC_SIZE*2,4,2);
+	put_info("Created user process 3!");
 
 	proc_create(USER_CS,USER_DS,ADDR_USER_START+PROC_SIZE*3);
 	read_sectors(ADDR_USER_START+PROC_SIZE*3,6,2);
+	put_info("Created user process 4!");
 
+	enable(); // VERY IMPORTANT!!!
+
+#ifdef DEBUG
 	put_info("Finish creating user process!");
+#endif
 }
 
 void exec_user_prg(int num) {
