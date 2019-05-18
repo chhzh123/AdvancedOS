@@ -19,7 +19,7 @@ KERNEL = bootloader.bin kernel.bin
 
 HARDDISK = mydisk.hdd
 USRDIR = usr
-USR = prg1.com prg2.com prg3.com prg4.com box.com
+USR = prg1.com prg2.com prg3.com prg4.com box.com sys_test.com
 
 ifdef DEBUG
 CCFLAGS += -DDEBUG
@@ -37,6 +37,7 @@ all: build programs
 	dd if=$(BUILD)/$(USRDIR)/prg3.com of=$(HARDDISK) seek=4 conv=notrunc
 	dd if=$(BUILD)/$(USRDIR)/prg4.com of=$(HARDDISK) seek=6 conv=notrunc
 	dd if=$(BUILD)/$(USRDIR)/box.com of=$(HARDDISK) seek=8 conv=notrunc
+	dd if=$(BUILD)/$(USRDIR)/sys_test.com of=$(HARDDISK) seek=10 conv=notrunc
 
 build:
 	-mkdir $(BUILD)

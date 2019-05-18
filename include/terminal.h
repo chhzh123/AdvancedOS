@@ -12,16 +12,23 @@
 #include "user.h"
 
 const char* PROMPT_INFO = "chzos> ";
-const char* HELLO_INFO = "Welcome to CHZOS!\n";
+const char* HELLO_INFO = "\
+     =====    ||     ||    =======\n\
+   //         ||     ||        //\n\
+   ||         ||=====||      // \n\
+   \\\\         ||     ||    //\n\
+     =====    ||     ||    =======\n\
+Welcome to CHZOS!\n";
 const char* HELP_INFO =
-"CHZ OS Shell version 0.5\n\
+"CHZ OS Shell version 1.0\n\
 These shell commands are defined internally. Type 'help' to see this list.\n\
 \n\
  help       -- Show this list\n\
  show       -- Show existing programs\n\
  tick       -- Show current execution time\n\
  read       -- Read disk and print out\n\
- user       -- Enter user mode\n\
+ sys        -- Test system call in user mode\n\
+ exec       -- Create 4 user processes and run all of them\n\
  exec [num] -- Execute the num-th program\n\
  clr        -- Clear the screen\n\
  exit       -- Exit OS\n";
@@ -61,6 +68,8 @@ void terminal()
 			printf("%d\n",get_tick_count());
 		else if (strcmp(str,"read") == 0)
 			read_disk_test();
+		else if (strcmp(str,"sys") == 0)
+			test_system_call();
 		else if (strcmp(str,"exec") == 0)
 			create_user_proc();
 		else if (strlen(str) >= 4){

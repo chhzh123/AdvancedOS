@@ -13,7 +13,7 @@
     in_delay equ 6000 ; control the speed
     out_delay equ 6000  ; outer loop
 
-	org 20000h              ; ORG (origin) is used to set the assembler location counter
+	org 60000h              ; ORG (origin) is used to set the assembler location counter
 
     jmp start
 

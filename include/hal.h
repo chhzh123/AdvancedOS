@@ -14,8 +14,7 @@
 #include "keyboard.h"
 #include "pit.h"
 #include "ide.h"
-
-extern void sys_interrupt_handler ();
+#include "syscall.h"
 
 void hal_initialize(){
 	printf("\n\n\n");
@@ -51,7 +50,7 @@ void hal_initialize(){
 	setvect (19, (unsigned long) simd_fpu_fault);
 
 	// install my own interrupts
-	setvect (0x80, (unsigned long) sys_interrupt_handler);
+	setvect_user (0x80, (unsigned long) sys_interrupt_handler);
 
 	put_info("Initialized IDT");
 
@@ -84,15 +83,6 @@ void generate_interrupt(int n){
 			:
 			:"a"(n)
 			);
-}
-
-void sleep (int ms) {
-	int ticks = ms + get_tick_count ();
-	while (ticks > get_tick_count ());
-}
-
-void sys_interrupt_handler_main () {
-	sleep(1000);
 }
 
 #endif // HAL_H

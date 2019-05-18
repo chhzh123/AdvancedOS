@@ -21,7 +21,7 @@ typedef struct Program{
 	char description[50];
 } Program;
 
-#define PRG_NUM 5
+#define PRG_NUM 6
 #define PrgSectorOffset 0
 Program prgs[PRG_NUM];
 
@@ -38,6 +38,7 @@ void show_user_prg(){
 			case 3: strcpy(prgs[i].description,"Quadrant 3: Flying two chars - OS"); break;
 			case 4: strcpy(prgs[i].description,"Quadrant 4: Flying two chars - parallelogram"); break;
 			case 5: strcpy(prgs[i].description,"Draw the box"); break;
+			case 6: strcpy(prgs[i].description,"System call test"); break;
 		}
 	}
 	printf("Name  Size  Pos  Description\n");
@@ -45,31 +46,32 @@ void show_user_prg(){
 		printf("%s %d %s %s\n", prgs[i].name, prgs[i].space, prgs[i].pos, prgs[i].description);
 }
 
+void create_one_proc(int num) {
+	read_sectors(ADDR_USER_START+(num-1)*PROC_SIZE,(num-1)*2,2);
+	proc_create(USER_CS,USER_DS,ADDR_USER_START+(num-1)*PROC_SIZE);
+	char str[100];
+	sprintf(str,"Created user process %d!",curr_pid);
+	put_info(str);
+}
+
 void create_user_proc() {
 
 	disable();
-
-	read_sectors(ADDR_USER_START,0,2);
-	proc_create(USER_CS,USER_DS,ADDR_USER_START);
-	put_info("Created user process 1!");
-
-	proc_create(USER_CS,USER_DS,ADDR_USER_START+PROC_SIZE);
-	read_sectors(ADDR_USER_START+PROC_SIZE,2,2);
-	put_info("Created user process 2!");
-
-	proc_create(USER_CS,USER_DS,ADDR_USER_START+PROC_SIZE*2);
-	read_sectors(ADDR_USER_START+PROC_SIZE*2,4,2);
-	put_info("Created user process 3!");
-
-	proc_create(USER_CS,USER_DS,ADDR_USER_START+PROC_SIZE*3);
-	read_sectors(ADDR_USER_START+PROC_SIZE*3,6,2);
-	put_info("Created user process 4!");
-
+	create_one_proc(1);
+	create_one_proc(2);
+	create_one_proc(3);
+	create_one_proc(4);
 	enable(); // VERY IMPORTANT!!!
 
 #ifdef DEBUG
 	put_info("Finish creating user process!");
 #endif
+}
+
+void test_system_call() {
+	disable();
+	create_one_proc(6);
+	enable();
 }
 
 void exec_user_prg(int num) {

@@ -79,7 +79,9 @@ save_proc_entry_ret:
 
 sys_interrupt_handler:
 	cli
+	push eax            ; Functional number
 	call sys_interrupt_handler_main
+	pop eax             ; Remember to pop out
 	sti
 	iretd
 
@@ -149,17 +151,17 @@ enter_usermode:
 ;;;;;
 ; STACK CHANGE! (different privilege level)
 ; | ss     |
-; | esp    |
+; | esp    | ; user stack esp!!!
 ; NO STACK CHANGE! (the same privilege level)
-; | eflags | ; esp+8
-; | cs     | ; esp+4
-; | eip    | ; esp *** ORIGINAL ESP ***
+; | eflags |
+; | cs     |
+; | eip    |
 ; NO ERROR CODE!
 ; | ax     |
 ; | cx     |
 ; | dx     |
 ; | bx     |
-; | sp     | ; original esp
+; | sp     | ; kernel stack esp
 ; | bp     |
 ; | si     |
 ; | di     |
@@ -210,12 +212,6 @@ restart_proc:
 	pop es
 	pop ds
 	popa
-
-	; push eax ; the stack is changed
-	; mov ax, [ esp + 20 ]
-	; mov ss, ax
-	; pop eax
-
 	iretd ; flush cs:eip
 
 testdata:

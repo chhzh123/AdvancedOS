@@ -204,7 +204,7 @@ void proc_switch(process* pp)
 	__asm__ volatile ("mov eax, esp":"=a"(stack)::);
 	tss_set_stack(KERNEL_DS,stack);
 
-	interruptdone(0);
+	interruptdone(0); // IMPORTANT!!! Enable interrupts to function well
 	restart_proc(
 		pp->regImg.gs, pp->regImg.fs, pp->regImg.es, pp->regImg.ds,
 		pp->regImg.edi, pp->regImg.esi, pp->regImg.ebp, pp->regImg.esp,

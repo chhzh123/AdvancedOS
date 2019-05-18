@@ -43,7 +43,7 @@ The operating system named "CHZOS" enables **32-bit protected mode**.
 
 * Protected mode support
 	- Global Descriptor Table (GDT)
-	- Interrupt Descriptor Table (IDT)
+	- Interrupt Descriptor Table (IDT): including exception handlers
 	- Task State Segment (TSS)
 	- Switch between kernel mode (ring 0) and user mode (ring 3)
 * Hardware Abstraction Layer (HAL)
@@ -60,6 +60,7 @@ The operating system named "CHZOS" enables **32-bit protected mode**.
 * User programs
 	- Standard libraries support (I/O, string, etc.)
 	- Load, schedule, and execute
+	- System call support (`0x80`)
 
 
 ## Tutorials

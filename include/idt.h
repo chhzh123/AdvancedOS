@@ -72,6 +72,11 @@ void setvect (int intno, uint64_t vect) {
 	install_ir (intno, INTERRUPT_GATE, KERNEL_CODE_SEGMENT_OFFSET, vect);
 }
 
+void setvect_user (int intno, uint64_t vect) {
+	install_ir (intno, INTERRUPT_GATE | IDT_DESC_RING3,
+		KERNEL_CODE_SEGMENT_OFFSET, vect);
+}
+
 extern void load_idt(unsigned long *idt_ptr);
 
 // initialize basic idt
