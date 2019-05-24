@@ -7,7 +7,6 @@
 #ifndef IDT_H
 #define IDT_H
 
-#include "stdio.h"
 #include <stdint.h>
 
 // i86 defines 256 possible interrupt handlers (0-255)
@@ -37,6 +36,7 @@ struct IDT_entry IDT[MAX_INTERRUPTS];
 // describes the structure for the processors idtr register
 unsigned long idt_ptr[2];
 
+void put_error(); // defined in "stdio.h"
 // default handler to catch unhandled system interrupts.
 void default_handler () {
 	put_error("Error: Unhandled Exception!");
@@ -99,5 +99,11 @@ int idt_init() {
 	return 0;
 }
 
+extern void keyboard_handler(void); // assembly
+void kb_init(void)
+{
+	/* populate IDT entry of keyboard's interrupt */
+	setvect(0x21,(unsigned long)keyboard_handler); // keyboard uses 33 interrupt
+}
 
 #endif // IDT_H

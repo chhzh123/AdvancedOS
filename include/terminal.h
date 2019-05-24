@@ -76,7 +76,11 @@ void terminal()
 			char cpystr[MAX_BUF_LEN];
 			strncpy(cpystr,str,4);
 			if (strcmp(cpystr,"exec") == 0){
-				exec_user_prg(str[5] - '0');
+				int num = str[5] - '0';
+				if (num <= 6)
+					exec_user_prg(num);
+				else
+					exec_elf(num);
 			} else
 				command_not_found(str);
 		} else

@@ -19,7 +19,7 @@ KERNEL = bootloader.bin kernel.bin
 
 HARDDISK = mydisk.hdd
 USRDIR = usr
-USR = prg1.com prg2.com prg3.com prg4.com box.com sys_test.com
+USR = prg1.com prg2.com prg3.com prg4.com box.com sys_test.com fork_test.out
 
 ifdef DEBUG
 CCFLAGS += -DDEBUG
@@ -38,6 +38,7 @@ all: build programs
 	dd if=$(BUILD)/$(USRDIR)/prg4.com of=$(HARDDISK) seek=6 conv=notrunc
 	dd if=$(BUILD)/$(USRDIR)/box.com of=$(HARDDISK) seek=8 conv=notrunc
 	dd if=$(BUILD)/$(USRDIR)/sys_test.com of=$(HARDDISK) seek=10 conv=notrunc
+	dd if=$(BUILD)/$(USRDIR)/fork_test.out of=$(HARDDISK) seek=12 conv=notrunc
 
 build:
 	-mkdir $(BUILD)
@@ -57,9 +58,20 @@ kernel.bin: kernel_entry.o kernel.o
 %.com : %.asm
 	$(AS) $< -o $(BUILD)/$@
 
+# generate elf file
+usr/fork_test.out: usr/fork_test.c
+	$(CC) $(CCFLAGS) $< -o $(BUILD)/fork_test.o
+	$(LD) -m elf_i386 -Tusr/link.ld $(BUILD)/fork_test.o -o $(BUILD)/$@
+
 # debug
 %.s : %.c
 	$(CC) $(CCFLAGS) -S $< -o $@
+
+# readelf -h fork_test.out ## show hex
+# readelf -S fork_test.out ## show section headers
+# readelf -l fork_test.out ## show program headers
+# objdump -d fork_test.out
+# hd fork_test.out
 
 # emulation
 run: bochs

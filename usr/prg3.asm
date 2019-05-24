@@ -63,9 +63,9 @@ changecolor:
 %endmacro
 
 mainloop:
+	show_string_color msg, msgY, msgX, 74h
 	call delayloop
 	OneChar px, py, drt, char, color
-	show_string_color msg, msgY, msgX, 74h
 	mov ax, word [ cnt ]
 	dec ax
 	mov word [ cnt ], ax

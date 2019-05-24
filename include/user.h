@@ -11,6 +11,8 @@
 #include "tss.h"
 #include "ide.h"
 #include "string.h"
+#include "task.h"
+#include "elf.h"
 
 extern void enter_usermode(uintptr_t addr); // assembly
 
@@ -21,7 +23,7 @@ typedef struct Program{
 	char description[50];
 } Program;
 
-#define PRG_NUM 6
+#define PRG_NUM 7
 #define PrgSectorOffset 0
 Program prgs[PRG_NUM];
 
@@ -39,6 +41,7 @@ void show_user_prg(){
 			case 4: strcpy(prgs[i].description,"Quadrant 4: Flying two chars - parallelogram"); break;
 			case 5: strcpy(prgs[i].description,"Draw the box"); break;
 			case 6: strcpy(prgs[i].description,"System call test"); break;
+			case 7: strcpy(prgs[i].description,"Fork test"); break;
 		}
 	}
 	printf("Name  Size  Pos  Description\n");
@@ -48,9 +51,9 @@ void show_user_prg(){
 
 void create_one_proc(int num) {
 	read_sectors(ADDR_USER_START+(num-1)*PROC_SIZE,(num-1)*2,2);
-	proc_create(USER_CS,USER_DS,ADDR_USER_START+(num-1)*PROC_SIZE);
+	process* pp = proc_create(USER_CS,USER_DS,ADDR_USER_START+(num-1)*PROC_SIZE);
 	char str[100];
-	sprintf(str,"Created user process %d!",curr_pid);
+	sprintf(str,"Created user process %d!",pp->pid);
 	put_info(str);
 }
 
@@ -85,10 +88,14 @@ void exec_user_prg(int num) {
 	__asm__ volatile ("mov eax, esp":"=a"(stack)::);
 	tss_set_stack(KERNEL_DS,stack+KERNEL_STACK_SIZE);
 
-	read_sectors(ADDR_USER_START,(num-1)*2,2);
+	uintptr_t addr = ADDR_USER_START+(num-1)*PROC_SIZE;
+	if (num < 7)
+		read_sectors(addr,(num-1)*2,2);
+	else
+		read_sectors(addr,(num-1)*2,15);
 
 #ifdef DEBUG
-	show_one_sector(ADDR_USER_START);
+	show_one_sector(addr);
 #endif
 
 	put_info("Begin entering user mode...");
@@ -96,7 +103,59 @@ void exec_user_prg(int num) {
 #ifndef DEBUG
 	clear_screen();
 #endif
-	enter_usermode((uintptr_t)ADDR_USER_START);
+	enter_usermode(addr);
+
+	put_info("Finish user mode!");
+}
+
+static uint8_t bin_img[30 * 512];
+
+void exec_elf(int num) {
+	if (!(num > 0 && num < PRG_NUM+1)){
+		put_error("Error: No this program!");
+		return;
+	}
+
+	// set up kernel stack
+	int stack = 0;
+	__asm__ volatile ("mov eax, esp":"=a"(stack)::);
+	tss_set_stack(KERNEL_DS,stack+KERNEL_STACK_SIZE);
+
+	uintptr_t addr_exec = ADDR_USER_START+(num-1)*PROC_SIZE;
+	uintptr_t addr = (uintptr_t)bin_img;
+
+	read_sectors(addr,(num-1)*2,30);
+
+	// parse elf header
+	elfhdr eh;
+	memcpy((void*)&eh,(void*)addr,sizeof(elfhdr));
+#ifdef DEBUG
+	print_elfhdr(&eh);
+#endif
+
+	if (eh.e_magic != ELF_MAGIC){
+		put_error("Bad elf file!");
+		for(;;){}
+	}
+
+	// parse program header
+	prghdr ph;
+	for (int i = 0, offset = eh.e_phoff;
+			i < eh.e_phnum; i++, offset += eh.e_phentsize){
+		memcpy((void*)&ph,(void*)(addr+offset),eh.e_phentsize);
+#ifdef DEBUG
+		print_prghdr(&ph);
+#endif
+		if (i == 0)
+			memcpy((void*)addr_exec,(void*)(addr+ph.p_offset),ph.p_memsz);
+	}
+
+	put_info("Begin entering user mode...");
+
+#ifndef DEBUG
+	clear_screen();
+#endif
+	enter_usermode(eh.e_entry);
 
 	put_info("Finish user mode!");
 }

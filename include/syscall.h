@@ -7,6 +7,8 @@
 #ifndef SYSCALL_H
 #define SYSCALL_H
 
+#include "task.h"
+
 extern void sys_interrupt_handler ();
 
 const char* LOGO = "\
@@ -22,13 +24,19 @@ void sleep (int ms) {
 }
 
 void sys_interrupt_handler_main (int no) {
-	if (no == 0)
+	if (no == 0) {
 		printf("%s",LOGO);
-	else {
+	} else if (no == 1) {
 		put_info("Sleep for 100ms");
 		int cnt = 0;
 		while (cnt++ < 10000); // cannot use sleep, or will cause nested interrupt
 		put_info("Done sleep!");
+	} else if (no == 10) {
+		do_fork();
+	} else if (no == 11) {
+		do_wait();
+	} else if (no == 12) {
+		do_exit();
 	}
 }
 

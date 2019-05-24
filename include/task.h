@@ -25,13 +25,26 @@
 #define PRIOR_SYS  0x2
 #define PRIOR_USER 0x1
 
-#define MAX_PROCESS 5
-#define MAX_TICK 1
+#define MAX_PROCESS 10
+#define MAX_TICK 5
+
+/*
+ * Five-state process model
+ *
+ *                <----------timer------------
+ *               /                            \
+ * NEW -fork-> READY -------restart-------> RUNNING -exit-> TERMINATED
+ *               \                            /
+ *                <-wakeup- WAITING <-blocked-
+ */
 
 enum PROC_STATUS
 {
-	PROC_SLEEP = 0,
-	PROC_ACTIVE = 1
+	PROC_NEW = 0,
+	PROC_READY = 1,
+	PROC_RUNNING = 2,
+	PROC_WAITING = 3, // blocked
+	PROC_TERMINATED = 4 // exit
 };
 
 struct regs {
@@ -64,6 +77,7 @@ typedef struct regs regs;
 typedef struct process {
 	regs   regImg;
 	int    pid;
+	struct process* parent;
 	int    priority;
 	int    status;
 	int    tick;
@@ -83,24 +97,29 @@ void reset_time(process* pp)
 	pp->tick = MAX_TICK;
 }
 
+void proc_init()
+{
+	memset(proc_list,0,sizeof(process) * MAX_PROCESS);
+	for (int i = 0; i < MAX_PROCESS; ++i){
+		proc_list[i].pid = 0;
+		proc_list[i].status = PROC_NEW;
+		proc_list[i].priority = PRIOR_USER;
+		proc_list[i].parent = NULL;
+	}
+}
+
+// NEW -> READY
 process* proc_alloc()
 {
-	// process* pp;
-	// for (pp = &proc_list[0]; pp < &proc_list[MAX_PROCESS]; ++pp){ // find free process
-
-	// 	if (pp->status == PROC_SLEEP){
-	// 		pp->status = PROC_ACTIVE;
-	// 		pp->pid = curr_pid++;
-	// 		pp->regImg.esp = pp->regImg.ebp = (uintptr_t)ADDR_USER_START + PROC_SIZE;
-	// 		pp->tick = MAX_TICK;
-	// 		return pp;
-	// 	}
-	// }
-	// return NULL;
-	process* pp = &proc_list[curr_pid];
-	pp->pid = curr_pid++;
-	pp->tick = MAX_TICK;
-	return pp;
+	for (int i = 0; i < MAX_PROCESS; ++i){ // find free process
+		process* pp = &proc_list[i];
+		if (pp->status == PROC_NEW){
+			pp->status = PROC_READY;
+			pp->pid = ++curr_pid; // start from 1
+			return pp;
+		}
+	}
+	return NULL;
 }
 
 process* proc_create(uint32_t cs, uint32_t ds, uintptr_t addr)
@@ -128,34 +147,27 @@ process* proc_create(uint32_t cs, uint32_t ds, uintptr_t addr)
 		= addr + PROC_SIZE; // reset
 	reset_time(pp);
 #ifdef DEBUG
-	printf("Create process %d!\n", curr_pid);
+	printf("Create process %d!\n", pp->pid);
 #endif
 	return pp;
 }
 
-void proc_init()
-{
-	memset(proc_list,0,sizeof(process) * MAX_PROCESS);
-	for (int i = 0; i < MAX_PROCESS; ++i){
-		proc_list[i].pid = 0;
-		proc_list[i].status = PROC_SLEEP;
-		proc_list[i].priority = PRIOR_USER;
-	}
-}
-
 process* proc_pick()
 {
-	if (curr_pid == 0)
-		return NULL;
-	int cnt = 0;
-	for (int i = 0; i < curr_pid; ++i){
-		if (proc_list[i].status == PROC_ACTIVE)
-			return &proc_list[(i+1) % curr_pid];
-		else
-			cnt++;
+	int curr_index = -1;
+	// find current running process
+	for (int i = 0; i < MAX_PROCESS; ++i){
+		if (proc_list[i].status == PROC_RUNNING){
+			curr_index = i;
+			break;
+		}
 	}
-	if (cnt == curr_pid)
-		return &proc_list[0];
+	// round-robin
+	for (int i = 0; i < MAX_PROCESS; ++i){
+		int index = (i + 1 + curr_index) % MAX_PROCESS;
+		if (proc_list[index].status == PROC_READY)
+			return &proc_list[index];
+	}
 	return NULL;
 }
 
@@ -176,10 +188,11 @@ extern void restart_proc(
 
 void enter_usermode(uintptr_t addr);
 
+// READY -> RUNNING && RUNNING -> READY
 void proc_switch(process* pp)
 {
 	if (!(curr_proc == NULL && curr_pid != 0)){
-		curr_proc->status = PROC_SLEEP;
+		curr_proc->status = PROC_READY; // not waiting!
 	}
 #ifdef DEBUG
 	put_info("In proc_switch");
@@ -189,7 +202,7 @@ void proc_switch(process* pp)
 #endif
 	reset_time(pp);
 
-	pp->status = PROC_ACTIVE;
+	pp->status = PROC_RUNNING;
 	curr_proc = pp;
 #ifdef DEBUG
 	printf("CS:%xh DS:%xh ES:%xh FS:%xh GS:%xh SS:%xh\n",
@@ -301,6 +314,113 @@ void pit_handler_main(
 
 	// tell hal we are done
 	interruptdone(0);
+}
+
+// NEW -> READY
+int do_fork() {
+
+	disable();
+	process* child;
+
+	// find empty entry
+	if ((child = proc_alloc()) == 0) {
+		enable();
+		return -1; // fail to create child process
+	}
+
+	// copy PCB
+	child->regImg.eip = curr_proc->regImg.eip;
+	child->regImg.cs = curr_proc->regImg.cs;
+	child->regImg.eflags = curr_proc->regImg.eflags;
+
+	child->regImg.eax = curr_proc->regImg.eax;
+	child->regImg.ecx = curr_proc->regImg.ecx;
+	child->regImg.edx = curr_proc->regImg.edx;
+	child->regImg.ebx = curr_proc->regImg.ebx;
+
+	child->regImg.esp = curr_proc->regImg.esp;
+	child->regImg.ebp = curr_proc->regImg.ebp + PROC_SIZE;
+	child->regImg.esi = curr_proc->regImg.esi;
+	child->regImg.edi = curr_proc->regImg.edi;
+
+	child->regImg.ds = curr_proc->regImg.ds;
+	child->regImg.es = curr_proc->regImg.es;
+	child->regImg.fs = curr_proc->regImg.fs;
+	child->regImg.gs = curr_proc->regImg.gs;
+
+	child->regImg.ss = curr_proc->regImg.ss;
+	child->regImg.user_esp = curr_proc->regImg.user_esp + PROC_SIZE; // move stack
+
+	// copy stack
+	memcpy((void*)child->regImg.user_esp,
+		(void*)curr_proc->regImg.user_esp,
+		curr_proc->regImg.user_esp - curr_proc->regImg.ebp);
+
+	// set state
+	child->parent = curr_proc;
+	child->status = PROC_READY;
+	child->tick = curr_proc->tick;
+
+#ifdef DEBUG
+	printf("Create child process %d!\n", child->pid);
+#endif
+	enable();
+
+	return child->pid;
+}
+
+// WAITING -> READY
+void wakeup(uint8_t pid) {
+	disable();
+#ifdef DEBUG
+	put_info("In wakeup");
+#endif
+	for (process* pp = &proc_list[0]; pp < &proc_list[MAX_PROCESS]; ++pp){
+		if (pp->pid == pid && pp->status == PROC_WAITING){
+			pp->status = PROC_READY;
+			enable();
+			return;
+		}
+	}
+	enable();
+}
+
+// wait for child process
+void do_wait() {
+	disable();
+#ifdef DEBUG
+	put_info("In wait");
+#endif
+	curr_proc->status = PROC_WAITING;
+	schedule_proc();
+	enable();
+}
+
+// RUNNING -> TERMINATED
+void do_exit() {
+	disable();
+#ifdef DEBUG
+	put_info("In exit");
+#endif
+	curr_proc->status = PROC_TERMINATED;
+	wakeup(curr_proc->parent->pid);
+	enable();
+}
+
+int kill(uint8_t pid) {
+	disable();
+#ifdef DEBUG
+	put_info("In kill");
+#endif
+	for (process* pp = &proc_list[0]; pp < &proc_list[MAX_PROCESS]; ++pp){
+		if (pp->pid == pid){
+			pp->status = PROC_TERMINATED;
+			enable();
+			return 0;
+		}
+	}
+	enable();
+	return -1;
 }
 
 #endif // TASK_H

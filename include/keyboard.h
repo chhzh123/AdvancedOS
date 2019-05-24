@@ -12,13 +12,10 @@
 
 #include "io.h"
 #include "scancode.h"
-#include "idt.h"
 
 #define KEYBOARD_DATA_PORT 0x60
 #define KEYBOARD_STATUS_PORT 0x64
 #define INVALID_KB_CHAR 0
-
-extern void keyboard_handler(void); // assembly
 
 static char kb_char;
 
@@ -40,16 +37,6 @@ void keyboard_handler_main(void)
 		char ascii = asccode[(unsigned char) keycode][0];
 		kb_char = ascii;
 	}
-}
-
-void kb_init(void)
-{
-	/* populate IDT entry of keyboard's interrupt */
-	setvect(0x21,(unsigned long)keyboard_handler); // keyboard uses 33 interrupt
-
-	/* 0xFD is 11111101 - enables only IRQ1 (keyboard)*/
-	// port_byte_out(0x21, 0xFD);
-	// port_byte_out(0xA1, 0xFD);
 }
 
 char getchar()

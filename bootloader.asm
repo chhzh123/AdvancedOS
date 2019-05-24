@@ -9,6 +9,7 @@
 	org 0x7c00
 
 	KERNEL_OFFSET equ 0x7e00
+	SECTOR_SIZE equ 0x200 ; 512B
 
 	mov bp, 0x7c00 ; Set the stack.
 	mov sp, bp
@@ -24,21 +25,22 @@
 	jmp $
 
 	%include "include/show.inc"
-	%include "include/gdt.inc"
-	%include "include/disk_load.inc"
 
 [ bits 16 ]
 
+	%include "include/disk_load.inc"
+
 load_kernel:
 	show_string_rm MSG_LOAD_KERNEL, 1, 0
-	mov bx, KERNEL_OFFSET  ; Setup parameters for our disk_load routine
-	mov dh, 40             ; load the first n sectors
-	call disk_load
+	load_sectors KERNEL_OFFSET, 35, 0, 0, 2
+	load_sectors KERNEL_OFFSET+SECTOR_SIZE*35, 10, 1, 0, 1
 	ret
 
 ;;;;; Swich from real mode to protected mode ;;;;;
 
 [ bits 16 ]
+
+	%include "include/gdt.inc"
 
 switch_to_pm:
 	cli                         ; We MUST switch of interrupts until we have

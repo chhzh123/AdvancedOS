@@ -25,5 +25,6 @@ void initialize()
 void main () {
 	initialize();
 	clear_screen();
-	terminal();
+	exec_elf(7);
+	// terminal();
 }

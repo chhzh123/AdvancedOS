@@ -7,6 +7,7 @@
 
 #include "io.h"
 #include "string.h"
+#include "keyboard.h"
 #include <stdarg.h>
 
 // Screen device I/O ports
