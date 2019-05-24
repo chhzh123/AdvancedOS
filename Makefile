@@ -70,7 +70,7 @@ usr/fork_test.out: usr/fork_test.c
 # readelf -h fork_test.out ## show hex
 # readelf -S fork_test.out ## show section headers
 # readelf -l fork_test.out ## show program headers
-# objdump -d fork_test.out
+# objdump -d fork_test.out ## show assembly
 # hd fork_test.out
 
 # emulation

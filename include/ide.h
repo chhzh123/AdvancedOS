@@ -70,6 +70,18 @@ void show_one_sector(uintptr_t addr)
 	printf("\n");
 }
 
+void show_hex(uintptr_t addr, size_t cnt)
+{
+	printf("Addr: %xh\n", addr);
+	uint8_t* sector = (uint8_t*) addr;
+	for (int j = 0; j < cnt; j++){
+		printf ("%x", sector[j]);
+		if (j % 2 == 1)
+			printf(" ");
+	}
+	printf("\n");
+}
+
 void read_disk_test(){
 	printf("Please enter the sector number: ");
 	uint8_t* sector = (uint8_t*)0x1000;

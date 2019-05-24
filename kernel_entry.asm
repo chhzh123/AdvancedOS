@@ -72,16 +72,19 @@ keyboard_handler:
 
 pit_handler:            ; handle process switching
 	cli
-	jmp save_proc_entry ; DO NOT USE CALL!!! WILL DESTROY STACK
-save_proc_entry_ret:
+	jmp pit_handler_entry ; DO NOT USE CALL!!! WILL DESTROY STACK
+pit_handler_entry_ret:
 	sti
 	iretd
 
 sys_interrupt_handler:
 	cli
+	jmp save_proc_entry
+save_proc_entry_ret:
 	push eax            ; Functional number
 	call sys_interrupt_handler_main
-	pop eax             ; Remember to pop out
+	pop ebx             ; Remember to pop out
+	; eax store the return value
 	sti
 	iretd
 
@@ -122,7 +125,7 @@ enter_usermode:
 
 ;;;;; Process ;;;;;
 
-[ global save_proc_entry ]
+[ global pit_handler_entry ]
 [ extern save_proc ]
 [ global restart_proc ]
 
@@ -170,7 +173,7 @@ enter_usermode:
 ; | fs     |
 ; | gs     |
 ; | ret-add| ; pit_handler_main
-save_proc_entry:
+pit_handler_entry:
 	pusha ; ax,cx,dx,bx,sp,bp,si,di
 	push ds
 	push es
@@ -178,6 +181,22 @@ save_proc_entry:
 	push gs
 
 	call pit_handler_main
+
+	pop gs
+	pop fs
+	pop es
+	pop ds
+	popa
+	jmp pit_handler_entry_ret
+
+save_proc_entry:
+	pusha ; ax,cx,dx,bx,sp,bp,si,di
+	push ds
+	push es
+	push fs
+	push gs
+
+	call save_proc
 
 	pop gs
 	pop fs
@@ -213,6 +232,14 @@ restart_proc:
 	pop ds
 	popa
 	iretd ; flush cs:eip
+
+;;;;; read process info ;;;;;
+
+[ global read_eip ]
+
+read_eip:
+	pop eax ; get return address
+	jmp eax ; return by jmp
 
 testdata:
 	msg db "This is a test message!", 0

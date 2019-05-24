@@ -11,7 +11,7 @@
 int fork() {
 	int pid;
 	asm volatile (
-		"mov ax, 10\n\t"
+		"mov eax, 10\n\t"
 		"int 0x80\n\t"
 		:"=a"(pid)
 		:
@@ -21,7 +21,7 @@ int fork() {
 
 void wait() {
 	asm volatile (
-		"mov ax, 11\n\t"
+		"mov eax, 11\n\t"
 		"int 0x80\n\t"
 		:
 		:
@@ -30,7 +30,7 @@ void wait() {
 
 void exit() {
 	asm volatile (
-		"mov ax, 12\n\t"
+		"mov eax, 12\n\t"
 		"int 0x80\n\t"
 		:
 		:

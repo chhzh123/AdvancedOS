@@ -23,7 +23,10 @@ void sleep (int ms) {
 	while (ticks > get_tick_count ());
 }
 
-void sys_interrupt_handler_main (int no) {
+int sys_interrupt_handler_main (int no) {
+#ifdef DEBUG
+	printf("Interrupt num:%d\n", no);
+#endif
 	if (no == 0) {
 		printf("%s",LOGO);
 	} else if (no == 1) {
@@ -32,12 +35,14 @@ void sys_interrupt_handler_main (int no) {
 		while (cnt++ < 10000); // cannot use sleep, or will cause nested interrupt
 		put_info("Done sleep!");
 	} else if (no == 10) {
-		do_fork();
+		int pid = do_fork();
+		return pid;
 	} else if (no == 11) {
 		do_wait();
 	} else if (no == 12) {
 		do_exit();
 	}
+	return 0;
 }
 
 #endif // SYSCALL_H

@@ -66,7 +66,7 @@ void bounds_check_fault (unsigned int cs, unsigned int eip, unsigned int eflags)
  */ 
 // invalid opcode / instruction
 __attribute__((__cdecl__))
-void invalid_opcode_fault (unsigned int eip, unsigned int cs, unsigned int eflags) {
+void invalid_opcode_fault (unsigned int cs, unsigned int eip, unsigned int eflags) {
 	char str[100];
 	sprintf(str,"Exception: Invalid opcode\ncs:eip=%xh:%xh, eflags=%xh",cs,eip,eflags);
 	put_error(str);
@@ -110,7 +110,7 @@ void stack_fault ( unsigned int cs,unsigned int err, unsigned int eip, unsigned 
 
 // general protection fault
 __attribute__((__cdecl__))
-void general_protection_fault (unsigned int err, unsigned int cs, unsigned int eflags, unsigned int eip) {
+void general_protection_fault (unsigned int cs,unsigned int err, unsigned int eip, unsigned int eflags) {
 	char str[100];
 	sprintf(str,"Exception: General Protection Fault\ncs:eip=%xh:%xh, eflags=%xh, err=%xh",cs,eip,eflags,err);
 	put_error(str);

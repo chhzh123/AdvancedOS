@@ -14,18 +14,19 @@ void CountLetter()
 }
 
 void main() {
-	// int pid;
-	asm volatile ("mov eax,0\n\tint 0x80\n\t"); // not ax, but eax!!!
+	// asm volatile ("mov eax,0\n\tint 0x80\n\t"); // not ax, but eax!!!
+	int pid = fork();
+	if (pid == -1){
+		printf("Error in fork!\n");
+		return;
+	}
+	if (pid) {
+		wait();
+		printf("LetterNr = %d, I'm parent!\n", LetterNr);
+	} else {
+		CountLetter();
+		printf("I'm child!\n");
+		exit(0);
+	}
 	while(1){}
-	// pid = fork();
-	// if (pid == -1)
-	// 	printf("Error in fork!\n");
-	// if (pid) {
-	// 	wait();
-	// 	printf("LetterNr = %d, pid = %d\n", LetterNr, pid);
-	// } else {
-	// 	CountLetter();
-	// 	printf("Child pid = %d\n", pid);
-	// 	exit(0);
-	// }
 }

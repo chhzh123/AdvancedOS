@@ -109,17 +109,14 @@ void exec_user_prg(int num) {
 }
 
 static uint8_t bin_img[30 * 512];
+static char info_buf[100];
 
 void exec_elf(int num) {
+	disable();
 	if (!(num > 0 && num < PRG_NUM+1)){
 		put_error("Error: No this program!");
 		return;
 	}
-
-	// set up kernel stack
-	int stack = 0;
-	__asm__ volatile ("mov eax, esp":"=a"(stack)::);
-	tss_set_stack(KERNEL_DS,stack+KERNEL_STACK_SIZE);
 
 	uintptr_t addr_exec = ADDR_USER_START+(num-1)*PROC_SIZE;
 	uintptr_t addr = (uintptr_t)bin_img;
@@ -150,14 +147,11 @@ void exec_elf(int num) {
 			memcpy((void*)addr_exec,(void*)(addr+ph.p_offset),ph.p_memsz);
 	}
 
-	put_info("Begin entering user mode...");
-
-#ifndef DEBUG
-	clear_screen();
-#endif
-	enter_usermode(eh.e_entry);
-
-	put_info("Finish user mode!");
+	process* pp = proc_create(USER_CS,USER_DS,eh.e_entry);
+	sprintf(info_buf,"Created user process %d!",pp->pid);
+	put_info(info_buf);
+	proc_switch(pp);
+	enable();
 }
 
 #endif // USER_H
