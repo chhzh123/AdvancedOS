@@ -9,6 +9,7 @@
 
 #include "task.h"
 
+void terminal_loop();
 extern void sys_interrupt_handler ();
 
 const char* LOGO = "\
@@ -41,6 +42,9 @@ int sys_interrupt_handler_main (int no) {
 		do_wait();
 	} else if (no == 12) {
 		do_exit();
+	} else if (no == 100) {
+		enable();
+		terminal_loop();
 	}
 	return 0;
 }

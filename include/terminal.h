@@ -47,11 +47,8 @@ void put_prompt()
 	set_color(WHITE,BLACK);
 }
 
-void terminal()
+void terminal_loop()
 {
-	set_color(CYAN,BLACK);
-	print(HELLO_INFO);
-	set_color(WHITE,BLACK);
 	while (1) {
 		put_prompt();
 		char str[MAX_BUF_LEN];
@@ -86,6 +83,14 @@ void terminal()
 		} else
 			command_not_found(str);
 	}
+}
+
+void terminal()
+{
+	set_color(CYAN,BLACK);
+	print(HELLO_INFO);
+	set_color(WHITE,BLACK);
+	terminal_loop();
 }
 
 #endif // TERMINAL_H

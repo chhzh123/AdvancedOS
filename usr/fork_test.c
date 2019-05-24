@@ -14,7 +14,6 @@ void CountLetter()
 }
 
 void main() {
-	// asm volatile ("mov eax,0\n\tint 0x80\n\t"); // not ax, but eax!!!
 	int pid = fork();
 	if (pid == -1){
 		printf("Error in fork!\n");
@@ -28,5 +27,6 @@ void main() {
 		printf("I'm child!\n");
 		exit(0);
 	}
-	while(1){}
+	asm volatile ("mov eax, 100\n\tint 0x80\n\t"); // not ax, but eax!!!
+	return;
 }

@@ -27,6 +27,8 @@ typedef struct Program{
 #define PrgSectorOffset 0
 Program prgs[PRG_NUM];
 
+static char info_buf[100];
+
 void show_user_prg(){
 	for (int i = 0; i < PRG_NUM; ++i){
 		char str[10];
@@ -52,9 +54,8 @@ void show_user_prg(){
 void create_one_proc(int num) {
 	read_sectors(ADDR_USER_START+(num-1)*PROC_SIZE,(num-1)*2,2);
 	process* pp = proc_create(USER_CS,USER_DS,ADDR_USER_START+(num-1)*PROC_SIZE);
-	char str[100];
-	sprintf(str,"Created user process %d!",pp->pid);
-	put_info(str);
+	sprintf(info_buf,"Created user process %d!",pp->pid);
+	put_info(info_buf);
 }
 
 void create_user_proc() {
@@ -64,7 +65,7 @@ void create_user_proc() {
 	create_one_proc(2);
 	create_one_proc(3);
 	create_one_proc(4);
-	enable(); // VERY IMPORTANT!!!
+	schedule_proc();
 
 #ifdef DEBUG
 	put_info("Finish creating user process!");
@@ -74,7 +75,7 @@ void create_user_proc() {
 void test_system_call() {
 	disable();
 	create_one_proc(6);
-	enable();
+	schedule_proc();
 }
 
 void exec_user_prg(int num) {
@@ -109,7 +110,6 @@ void exec_user_prg(int num) {
 }
 
 static uint8_t bin_img[30 * 512];
-static char info_buf[100];
 
 void exec_elf(int num) {
 	disable();
@@ -150,8 +150,7 @@ void exec_elf(int num) {
 	process* pp = proc_create(USER_CS,USER_DS,eh.e_entry);
 	sprintf(info_buf,"Created user process %d!",pp->pid);
 	put_info(info_buf);
-	proc_switch(pp);
-	enable();
+	schedule_proc();
 }
 
 #endif // USER_H
