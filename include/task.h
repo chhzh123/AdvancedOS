@@ -26,7 +26,7 @@
 #define PRIOR_USER 0x1
 
 #define MAX_PROCESS 10
-#define MAX_TICK 5000
+#define MAX_TICK 10
 
 /*
  * Five-state process model
@@ -105,6 +105,14 @@ process* get_proc()
 void reset_time(process* pp)
 {
 	pp->tick = MAX_TICK;
+}
+
+int sys_get_pid()
+{
+	if (curr_proc == NULL)
+		return -1;
+	else
+		return curr_proc->pid;
 }
 
 void proc_init()
@@ -360,7 +368,7 @@ int do_fork() {
 
 	child->regImg.esp = curr_proc->regImg.esp;
 	// child->regImg.ebp = curr_proc->regImg.ebp; // use different stack!
-	child->regImg.ebp = curr_proc->regImg.ebp + 0x100; // use different stack!
+	child->regImg.ebp = curr_proc->regImg.ebp + (child->pid * 0x100); // use different stack!
 	child->regImg.esi = curr_proc->regImg.esi;
 	child->regImg.edi = curr_proc->regImg.edi;
 
@@ -371,7 +379,7 @@ int do_fork() {
 
 	child->regImg.ss = curr_proc->regImg.ss;
 	// child->regImg.user_esp = curr_proc->regImg.user_esp;
-	child->regImg.user_esp = curr_proc->regImg.user_esp + 0x100;
+	child->regImg.user_esp = curr_proc->regImg.user_esp + (child->pid * 0x100);
 
 	// copy stack
 	memcpy((void*)(child->regImg.user_esp),
@@ -397,7 +405,7 @@ int do_fork() {
 	return child->pid;
 }
 
-// WAITING -> READY
+// initiative, WAITING -> READY
 void wakeup(uint8_t pid) {
 	disable();
 #ifdef DEBUG
@@ -413,6 +421,9 @@ void wakeup(uint8_t pid) {
 	}
 	enable();
 }
+
+// passive blocked
+// void blocked()
 
 // wait for child process
 void do_wait() {
@@ -432,7 +443,8 @@ void do_exit() {
 	put_info("In exit");
 #endif
 	curr_proc->status = PROC_TERMINATED;
-	wakeup(curr_proc->parent->pid);
+	if (curr_proc->parent != NULL)
+		wakeup(curr_proc->parent->pid);
 	enable();
 }
 

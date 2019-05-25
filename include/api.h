@@ -37,4 +37,15 @@ void exit() {
 		);
 }
 
+int get_pid() {
+	int pid;
+	asm volatile (
+		"mov eax, 13\n\t"
+		"int 0x80\n\t"
+		:"=a"(pid)
+		:
+		);
+	return pid;
+}
+
 #endif // API_H

@@ -1,3 +1,6 @@
+// Copyright (c) 2019 Hongzheng Chen
+// chenhzh37@mail2.sysu.edu.cn
+
 #include "stdio.h"
 #include "api.h"
 #include "string.h"

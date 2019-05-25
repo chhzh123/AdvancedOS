@@ -42,6 +42,8 @@ int sys_interrupt_handler_main (int no) {
 		do_wait();
 	} else if (no == 12) {
 		do_exit();
+	} else if (no == 13) {
+		return sys_get_pid();
 	} else if (no == 100) {
 		enable();
 		terminal_loop();

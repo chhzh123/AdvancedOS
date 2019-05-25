@@ -23,7 +23,7 @@ typedef struct Program{
 	char description[50];
 } Program;
 
-#define PRG_NUM 7
+#define PRG_NUM 8
 #define PrgSectorOffset 0
 Program prgs[PRG_NUM];
 
@@ -44,6 +44,7 @@ void show_user_prg(){
 			case 5: strcpy(prgs[i].description,"Draw the box"); break;
 			case 6: strcpy(prgs[i].description,"System call test"); break;
 			case 7: strcpy(prgs[i].description,"Fork test"); break;
+			case 8: strcpy(prgs[i].description,"Fork test 2"); break;
 		}
 	}
 	printf("Name  Size  Pos  Description\n");
@@ -117,17 +118,23 @@ void exec_elf(int num) {
 		put_error("Error: No this program!");
 		return;
 	}
+	memset(bin_img,0,sizeof(bin_img));
 
-	uintptr_t addr_exec = ADDR_USER_START+(num-1)*PROC_SIZE;
+	uintptr_t addr_exec;
+	if (num == 7)
+		addr_exec = ADDR_USER_START+(num-1)*PROC_SIZE;
+	else
+		addr_exec = ADDR_USER_START+(num-2)*PROC_SIZE;
 	uintptr_t addr = (uintptr_t)bin_img;
 
-	read_sectors(addr,(num-1)*2,30);
+	read_sectors(addr,(num-1)*2+(num-7)*28,30);
 
 	// parse elf header
 	elfhdr eh;
 	memcpy((void*)&eh,(void*)addr,sizeof(elfhdr));
 #ifdef DEBUG
 	print_elfhdr(&eh);
+	show_one_sector(addr);
 #endif
 
 	if (eh.e_magic != ELF_MAGIC){

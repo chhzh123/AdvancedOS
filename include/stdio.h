@@ -247,6 +247,7 @@ void sprintf(char* buf, const char* format, ...) {
 
 	va_list valist;
 	va_start(valist, format);
+	memset(buf,0,sizeof(buf));
 
 	for (i = 0; format[i]; ++i) {
 		int digitLength = 0;
