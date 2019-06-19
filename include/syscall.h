@@ -8,6 +8,7 @@
 #define SYSCALL_H
 
 #include "task.h"
+#include "semaphore.h"
 
 void terminal_loop();
 extern void sys_interrupt_handler ();
@@ -28,6 +29,8 @@ int sys_interrupt_handler_main (int no) {
 #ifdef DEBUG
 	printf("Interrupt num:%d\n", no);
 #endif
+	int arg;
+	asm volatile("":"=b"(arg):);
 	if (no == 0) {
 		printf("%s",LOGO);
 	} else if (no == 1) {
@@ -44,6 +47,15 @@ int sys_interrupt_handler_main (int no) {
 		do_exit();
 	} else if (no == 13) {
 		return sys_get_pid();
+	} else if (no == 20) {
+		int sem_id = do_getsem(arg); // val
+		return sem_id;
+	} else if (no == 21) {
+		do_sem_p(arg); // sem_id
+	} else if (no == 22) {
+		do_sem_v(arg); // sem_id
+	} else if (no == 23) {
+		do_freesem(arg); // sem_id
 	} else if (no == 100) {
 		enable();
 		terminal_loop();

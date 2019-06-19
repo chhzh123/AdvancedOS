@@ -19,7 +19,8 @@ KERNEL = bootloader.bin kernel.bin
 
 HARDDISK = mydisk.hdd
 USRDIR = usr
-USR = prg1.com prg2.com prg3.com prg4.com box.com sys_test.com fork_test.out fork2.out
+USR = prg1.com prg2.com prg3.com prg4.com box.com sys_test.com
+USR += fork_test.out fork2.out bank.out fruit.out prod_cons.out
 
 ifdef DEBUG
 CCFLAGS += -DDEBUG
@@ -40,6 +41,9 @@ all: build programs
 	dd if=$(BUILD)/$(USRDIR)/sys_test.com of=$(HARDDISK) seek=10 conv=notrunc
 	dd if=$(BUILD)/$(USRDIR)/fork_test.out of=$(HARDDISK) seek=12 conv=notrunc
 	dd if=$(BUILD)/$(USRDIR)/fork2.out of=$(HARDDISK) seek=42 conv=notrunc
+	dd if=$(BUILD)/$(USRDIR)/bank.out of=$(HARDDISK) seek=72 conv=notrunc
+	dd if=$(BUILD)/$(USRDIR)/fruit.out of=$(HARDDISK) seek=102 conv=notrunc
+	dd if=$(BUILD)/$(USRDIR)/prod_cons.out of=$(HARDDISK) seek=132 conv=notrunc
 
 build:
 	-mkdir $(BUILD)
@@ -60,12 +64,24 @@ kernel.bin: kernel_entry.o kernel.o
 	$(AS) $< -o $(BUILD)/$@
 
 # generate elf file
+# %.out : %.c
+# 	$(CC) $(CCFLAGS) $< -o $(BUILD)/$@
+# 	$(LD) -m elf_i386 -Tusr/link.ld $(BUILD)/$@.o -o $(BUILD)/$@
 usr/fork_test.out: usr/fork_test.c
 	$(CC) $(CCFLAGS) $< -o $(BUILD)/fork_test.o
 	$(LD) -m elf_i386 -Tusr/link.ld $(BUILD)/fork_test.o -o $(BUILD)/$@
 usr/fork2.out: usr/fork2.c
 	$(CC) $(CCFLAGS) $< -o $(BUILD)/fork2.o
 	$(LD) -m elf_i386 -Tusr/link.ld $(BUILD)/fork2.o -o $(BUILD)/$@
+usr/bank.out: usr/bank.c
+	$(CC) $(CCFLAGS) $< -o $(BUILD)/bank.o
+	$(LD) -m elf_i386 -Tusr/link.ld $(BUILD)/bank.o -o $(BUILD)/$@
+usr/fruit.out: usr/fruit.c
+	$(CC) $(CCFLAGS) $< -o $(BUILD)/fruit.o
+	$(LD) -m elf_i386 -Tusr/link.ld $(BUILD)/fruit.o -o $(BUILD)/$@
+usr/prod_cons.out: usr/prod_cons.c
+	$(CC) $(CCFLAGS) $< -o $(BUILD)/prod_cons.o
+	$(LD) -m elf_i386 -Tusr/link.ld $(BUILD)/prod_cons.o -o $(BUILD)/$@
 
 # debug
 %.s : %.c

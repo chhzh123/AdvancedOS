@@ -6,6 +6,7 @@
 
 #include "hal.h"
 #include "task.h"
+#include "semaphore.h"
 #include "terminal.h"
 
 void initialize()
@@ -20,6 +21,11 @@ void initialize()
 	 */
 	proc_init();
 	put_info("Initialized process");
+
+	/*
+	 * Semaphore initialization
+	 */
+	sem_init();
 }
 
 void main () {

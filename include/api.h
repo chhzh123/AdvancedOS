@@ -48,4 +48,43 @@ int get_pid() {
 	return pid;
 }
 
+// semaphore
+int get_sem(int val) {
+	int sem_id;
+	asm volatile (
+		"mov eax, 20\n\t"
+		"int 0x80\n\t"
+		:"=a"(sem_id)
+		:"b"(val)
+		);
+	return sem_id;
+}
+
+void sem_wait(int sem_id) {
+	asm volatile (
+		"mov eax, 21\n\t"
+		"int 0x80\n\t"
+		:
+		:"b"(sem_id)
+		);
+}
+
+void sem_signal(int sem_id) {
+	asm volatile (
+		"mov eax, 22\n\t"
+		"int 0x80\n\t"
+		:
+		:"b"(sem_id)
+		);
+}
+
+void free_sem(int sem_id) {
+	asm volatile (
+		"mov eax, 23\n\t"
+		"int 0x80\n\t"
+		:
+		:"b"(sem_id)
+		);
+}
+
 #endif // API_H

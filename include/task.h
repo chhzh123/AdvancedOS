@@ -78,6 +78,7 @@ typedef struct process {
 	regs   regImg;
 	int    pid;
 	struct process* parent;
+	struct process* next; // used for semaphore
 	int    priority;
 	int    status;
 	int    tick;
@@ -123,6 +124,7 @@ void proc_init()
 		proc_list[i].status = PROC_NEW;
 		proc_list[i].priority = PRIOR_USER;
 		proc_list[i].parent = NULL;
+		proc_list[i].next = NULL;
 	}
 }
 
@@ -312,9 +314,11 @@ void pit_handler_main(
 	// increment tick count
 	pit_ticks++;
 
+#ifdef DEBUG
 	char str[100];
 	itoa(pit_ticks,str,10);
 	show_static_string(str,24);
+#endif
 
 	if (curr_proc == NULL){
 		if (curr_pid != 0) // directly schedule after creating

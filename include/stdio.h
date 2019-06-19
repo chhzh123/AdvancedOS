@@ -334,7 +334,7 @@ void printf(const char* format, ...){
 	va_end(valist);
 }
 
-// sscanf("info:abc num:123","info:%s num:%d",str,num)
+// sscanf("info:abc num:123","info:%s num:%d",str,&num)
 void sscanf(const char* s, const char* format, ...) {
 	int narg = 0;
 	int i = 0;

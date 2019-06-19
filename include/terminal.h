@@ -73,7 +73,9 @@ void terminal_loop()
 			char cpystr[MAX_BUF_LEN];
 			strncpy(cpystr,str,4);
 			if (strcmp(cpystr,"exec") == 0){
-				int num = str[5] - '0';
+				int num;
+				sscanf(str,"exec %d",&num);
+				printf("%d\n", num);
 				if (num <= 6)
 					exec_user_prg(num);
 				else

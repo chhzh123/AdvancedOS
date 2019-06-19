@@ -23,7 +23,7 @@ typedef struct Program{
 	char description[50];
 } Program;
 
-#define PRG_NUM 8
+#define PRG_NUM 11
 #define PrgSectorOffset 0
 Program prgs[PRG_NUM];
 
@@ -45,6 +45,9 @@ void show_user_prg(){
 			case 6: strcpy(prgs[i].description,"System call test"); break;
 			case 7: strcpy(prgs[i].description,"Fork test"); break;
 			case 8: strcpy(prgs[i].description,"Fork test 2"); break;
+			case 9: strcpy(prgs[i].description,"Bank account");break;
+			case 10: strcpy(prgs[i].description,"Fruit");break;
+			case 11: strcpy(prgs[i].description,"Producer-consumer");break;
 		}
 	}
 	printf("Name  Size  Pos  Description\n");
@@ -121,10 +124,7 @@ void exec_elf(int num) {
 	memset(bin_img,0,sizeof(bin_img));
 
 	uintptr_t addr_exec;
-	if (num == 7)
-		addr_exec = ADDR_USER_START+(num-1)*PROC_SIZE;
-	else
-		addr_exec = ADDR_USER_START+(num-2)*PROC_SIZE;
+	addr_exec = ADDR_USER_START + 6 * PROC_SIZE;
 	uintptr_t addr = (uintptr_t)bin_img;
 
 	read_sectors(addr,(num-1)*2+(num-7)*28,30);
