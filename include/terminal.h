@@ -75,7 +75,6 @@ void terminal_loop()
 			if (strcmp(cpystr,"exec") == 0){
 				int num;
 				sscanf(str,"exec %d",&num);
-				printf("%d\n", num);
 				if (num <= 6)
 					exec_user_prg(num);
 				else

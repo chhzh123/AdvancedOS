@@ -23,7 +23,7 @@ typedef struct Program{
 	char description[50];
 } Program;
 
-#define PRG_NUM 11
+#define PRG_NUM 12
 #define PrgSectorOffset 0
 Program prgs[PRG_NUM];
 
@@ -48,6 +48,7 @@ void show_user_prg(){
 			case 9: strcpy(prgs[i].description,"Bank account");break;
 			case 10: strcpy(prgs[i].description,"Fruit");break;
 			case 11: strcpy(prgs[i].description,"Producer-consumer");break;
+			case 12: strcpy(prgs[i].description,"Hello world thread!");break;
 		}
 	}
 	printf("Name  Size  Pos  Description\n");

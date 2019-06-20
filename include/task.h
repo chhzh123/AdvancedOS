@@ -26,7 +26,7 @@
 #define PRIOR_USER 0x1
 
 #define MAX_PROCESS 10
-#define MAX_TICK 10
+#define MAX_TICK 1
 
 /*
  * Five-state process model
@@ -74,6 +74,11 @@ struct regs {
 } __attribute__((packed));
 typedef struct regs regs;
 
+/*
+ * Reference to Linux
+ * https://stackoverflow.com/questions/807506/threads-vs-processes-in-linux
+ * View threads as light-weight processes
+ */
 typedef struct process {
 	regs   regImg;
 	int    pid;
@@ -371,7 +376,6 @@ int do_fork() {
 	child->regImg.ebx = curr_proc->regImg.ebx;
 
 	child->regImg.esp = curr_proc->regImg.esp;
-	// child->regImg.ebp = curr_proc->regImg.ebp; // use different stack!
 	child->regImg.ebp = curr_proc->regImg.ebp + (child->pid * 0x100); // use different stack!
 	child->regImg.esi = curr_proc->regImg.esi;
 	child->regImg.edi = curr_proc->regImg.edi;
@@ -382,7 +386,6 @@ int do_fork() {
 	child->regImg.gs = curr_proc->regImg.gs;
 
 	child->regImg.ss = curr_proc->regImg.ss;
-	// child->regImg.user_esp = curr_proc->regImg.user_esp;
 	child->regImg.user_esp = curr_proc->regImg.user_esp + (child->pid * 0x100);
 
 	// copy stack

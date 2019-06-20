@@ -74,4 +74,16 @@ void do_freesem(int sem_id) {
     sem_list[sem_id].head = NULL;
 }
 
+int mutex_get() {
+    return do_getsem(1);
+}
+
+void mutex_lock(int lock_id) {
+    do_sem_p(lock_id);
+}
+
+void mutex_unlock(int lock_id) {
+    do_sem_v(lock_id);
+}
+
 #endif // SEMAPHORE_H

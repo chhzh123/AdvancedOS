@@ -20,7 +20,7 @@ KERNEL = bootloader.bin kernel.bin
 HARDDISK = mydisk.hdd
 USRDIR = usr
 USR = prg1.com prg2.com prg3.com prg4.com box.com sys_test.com
-USR += fork_test.out fork2.out bank.out fruit.out prod_cons.out
+USR += fork_test.out fork2.out bank.out fruit.out prod_cons.out hello_world_thread.out
 
 ifdef DEBUG
 CCFLAGS += -DDEBUG
@@ -44,6 +44,7 @@ all: build programs
 	dd if=$(BUILD)/$(USRDIR)/bank.out of=$(HARDDISK) seek=72 conv=notrunc
 	dd if=$(BUILD)/$(USRDIR)/fruit.out of=$(HARDDISK) seek=102 conv=notrunc
 	dd if=$(BUILD)/$(USRDIR)/prod_cons.out of=$(HARDDISK) seek=132 conv=notrunc
+	dd if=$(BUILD)/$(USRDIR)/hello_world_thread.out of=$(HARDDISK) seek=162 conv=notrunc
 
 build:
 	-mkdir $(BUILD)
@@ -82,6 +83,9 @@ usr/fruit.out: usr/fruit.c
 usr/prod_cons.out: usr/prod_cons.c
 	$(CC) $(CCFLAGS) $< -o $(BUILD)/prod_cons.o
 	$(LD) -m elf_i386 -Tusr/link.ld $(BUILD)/prod_cons.o -o $(BUILD)/$@
+usr/hello_world_thread.out: usr/hello_world_thread.c
+	$(CC) $(CCFLAGS) $< -o $(BUILD)/hello_world_thread.o
+	$(LD) -m elf_i386 -Tusr/link.ld $(BUILD)/hello_world_thread.o -o $(BUILD)/$@
 
 # debug
 %.s : %.c

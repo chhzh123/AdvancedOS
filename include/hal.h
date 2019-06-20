@@ -15,6 +15,7 @@
 #include "pit.h"
 #include "ide.h"
 #include "syscall.h"
+#include "systhread.h"
 
 void hal_initialize(){
 	printf("\n\n\n");
@@ -51,6 +52,7 @@ void hal_initialize(){
 
 	// install my own interrupts
 	setvect_user (0x80, (unsigned long) sys_interrupt_handler);
+	setvect_user (0x81, (unsigned long) sys_pthread_handler);
 
 	put_info("Initialized IDT");
 

@@ -55,9 +55,14 @@ The operating system named "CHZOS" enables **32-bit protected mode**.
 	- Basic I/O interface: use video RAM to show
 	- Simple parser for the input commands
 * Multiple processes management
+	- Five-state process model
+	- Parent and child processes management with fork, wait, exit, etc.
+	- Semaphore support (P/V operation)
+	- Pthread-like multi-threading support
 	- Time-sharing, multi-tasking
 	- Currently use round-robin scheduling
 * User programs
+	- ELF file support
 	- Standard libraries support (I/O, string, etc.)
 	- Load, schedule, and execute
 	- System call support (`0x80`)
