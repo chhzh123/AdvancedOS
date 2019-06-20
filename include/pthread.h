@@ -7,6 +7,10 @@
 #ifndef PTHREAD_H
 #define PTHREAD_H
 
+#include <stdint.h>
+typedef int pthread_t;
+typedef uintptr_t pthread_addr;
+
 int pthread_create(int* tid, uintptr_t func, void* args) {
 	int ret;
 	asm volatile (

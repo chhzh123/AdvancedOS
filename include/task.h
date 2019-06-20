@@ -25,7 +25,7 @@
 #define PRIOR_SYS  0x2
 #define PRIOR_USER 0x1
 
-#define MAX_PROCESS 10
+#define MAX_PROCESS 20
 #define MAX_TICK 1
 
 /*
@@ -270,7 +270,7 @@ void proc_switch(process* pp)
 			curr_proc->status = PROC_READY; // avoid PROC_WAITING
 	}
 #ifdef DEBUG
-	put_info("In proc_switch");
+	printf("In proc_switch: %d->%d\n", curr_proc->pid, pp->pid);
 #else
 	else
 		clear_screen(); // the first process

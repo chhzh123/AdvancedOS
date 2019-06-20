@@ -20,7 +20,7 @@ KERNEL = bootloader.bin kernel.bin
 HARDDISK = mydisk.hdd
 USRDIR = usr
 USR = prg1.com prg2.com prg3.com prg4.com box.com sys_test.com
-USR += fork_test.out fork2.out bank.out fruit.out prod_cons.out hello_world_thread.out
+USR += fork_test.out fork2.out bank.out fruit.out prod_cons.out hello_world_thread.out matmal.out
 
 ifdef DEBUG
 CCFLAGS += -DDEBUG
@@ -45,6 +45,7 @@ all: build programs
 	dd if=$(BUILD)/$(USRDIR)/fruit.out of=$(HARDDISK) seek=102 conv=notrunc
 	dd if=$(BUILD)/$(USRDIR)/prod_cons.out of=$(HARDDISK) seek=132 conv=notrunc
 	dd if=$(BUILD)/$(USRDIR)/hello_world_thread.out of=$(HARDDISK) seek=162 conv=notrunc
+	dd if=$(BUILD)/$(USRDIR)/matmal.out of=$(HARDDISK) seek=192 conv=notrunc
 
 build:
 	-mkdir $(BUILD)
@@ -86,6 +87,9 @@ usr/prod_cons.out: usr/prod_cons.c
 usr/hello_world_thread.out: usr/hello_world_thread.c
 	$(CC) $(CCFLAGS) $< -o $(BUILD)/hello_world_thread.o
 	$(LD) -m elf_i386 -Tusr/link.ld $(BUILD)/hello_world_thread.o -o $(BUILD)/$@
+usr/matmal.out: usr/matmal.c
+	$(CC) $(CCFLAGS) $< -o $(BUILD)/matmal.o
+	$(LD) -m elf_i386 -Tusr/link.ld $(BUILD)/matmal.o -o $(BUILD)/$@
 
 # debug
 %.s : %.c

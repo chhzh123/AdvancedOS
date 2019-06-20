@@ -111,6 +111,7 @@ void do_thread_exit()
 	if (curr_proc->parent != NULL)
 		wakeup(curr_proc->parent->pid);
 	enable();
+	user_process_return();
 }
 
 void user_pthread_return() {
