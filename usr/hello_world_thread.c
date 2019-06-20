@@ -4,7 +4,7 @@
 #include "stdio.h"
 #include "pthread.h"
 
-int m = 100;
+int m = 5;
 
 void hello(void* args){
 	char* str = (char*) args;
@@ -18,6 +18,5 @@ void main() {
 	pthread_create(&tid2,(uintptr_t)hello,"world!");
 	pthread_join(tid1,NULL);
 	pthread_join(tid2,NULL);
-	asm volatile ("mov eax, 100\n\tint 0x80\n\t"); // not ax, but eax!!!
 	return;
 }

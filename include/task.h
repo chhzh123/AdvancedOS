@@ -147,6 +147,7 @@ process* proc_alloc()
 	return NULL;
 }
 
+void user_process_return();
 process* proc_create(uint32_t cs, uint32_t ds, uintptr_t addr)
 {
 	disable();
@@ -171,6 +172,12 @@ process* proc_create(uint32_t cs, uint32_t ds, uintptr_t addr)
 		= pp->regImg.user_esp
 		= addr + PROC_SIZE; // reset
 	reset_time(pp);
+
+	uintptr_t* stack = (uintptr_t*) pp->regImg.user_esp;
+	stack--;
+	*stack = (uintptr_t) user_process_return; // return address
+	pp->regImg.user_esp = (uintptr_t) stack;
+
 #ifdef DEBUG
 	printf("Create process %d!\n", pp->pid);
 #endif
@@ -469,6 +476,11 @@ int kill(uint8_t pid) {
 	}
 	enable();
 	return -1;
+}
+
+void user_process_return() {
+	asm volatile ("mov eax, 100\n\t"
+				  "int 0x80\n\t"); // not ax, but eax!!!
 }
 
 #endif // TASK_H

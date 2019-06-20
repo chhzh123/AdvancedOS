@@ -8,8 +8,9 @@
 #define SYSTHREAD_H
 
 #include "task.h"
-#include "pthread.h"
 #include <stdint.h>
+
+void user_pthread_return();
 
 int do_thread_create(int* tid, uintptr_t func, void* args)
 {
@@ -71,7 +72,7 @@ int do_thread_create(int* tid, uintptr_t func, void* args)
 	stack--;
 	*stack = (uintptr_t) args; // pass arguments
 	stack--;
-	*stack = (uintptr_t) pthread_exit; // return address
+	*stack = (uintptr_t) user_pthread_return; // return address
 	child->regImg.user_esp = (uintptr_t) stack;
 
 	// set return values
@@ -110,6 +111,14 @@ void do_thread_exit()
 	if (curr_proc->parent != NULL)
 		wakeup(curr_proc->parent->pid);
 	enable();
+}
+
+void user_pthread_return() {
+	asm volatile (
+		"int 0x81\n\t"
+		:
+		:"a"(3)
+		);
 }
 
 extern void sys_pthread_handler ();

@@ -30,6 +30,5 @@ void main() {
 		printf("I'm child!\n");
 		exit(0);
 	}
-	asm volatile ("mov eax, 100\n\tint 0x80\n\t"); // not ax, but eax!!!
 	return;
 }

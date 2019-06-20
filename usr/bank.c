@@ -31,6 +31,5 @@ void main() {
 		exit(0);
 	}
 	wait(); // parent
-	asm volatile ("mov eax, 100\n\tint 0x80\n\t"); // not ax, but eax!!!
 	return;
 }

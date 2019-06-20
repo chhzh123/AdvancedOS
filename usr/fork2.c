@@ -13,6 +13,5 @@ void main()
 		printf("This is hello from process %d! (child)\n", get_pid());
 	else
 		printf("This is hello from process %d! (parent)\n", get_pid());
-	asm volatile ("mov eax, 100\n\tint 0x80\n\t"); // not ax, but eax!!!
 	return;
 }
