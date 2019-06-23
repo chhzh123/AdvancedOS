@@ -33,6 +33,7 @@
 #define FAT_PHYS_SIZE 9
 #define FAT_ROOT_SIZE 14
 #define FAT_NUM_ROOT_ENTRY 224
+#define FAT_NUM_DIR_ENTRY 16
 
 #define FAT_BOOTSECTOR_START 0
 #define FAT_ENTRY_START 1
@@ -49,6 +50,9 @@
 #define FAT_ATTR_UNUSED 0x80
 
 #define EOF_FAT12	   0xFF8
+
+char curr_path[50];
+int curr_dir;
 
 // Boot Sector (BS) & BPB (BIOS Parameter Block)
 typedef struct bootsect
@@ -98,13 +102,13 @@ static fat12_t fat;
 
 typedef struct fat12_file_attr
 {
-	unsigned long read_only	: 1;
-	unsigned long hidden	: 1;
-	unsigned long system	: 1;
-	unsigned long label	: 1;
-	unsigned long directory	: 1;
-	unsigned long archive	: 1;
-	unsigned long __res	: 2;
+	unsigned long read_only : 1;
+	unsigned long hidden    : 1;
+	unsigned long system    : 1;
+	unsigned long label	    : 1;
+	unsigned long directory : 1;
+	unsigned long archive   : 1;
+	unsigned long __res     : 2;
 } __attribute__ ((packed)) fat12_file_attr_t;
 
 // Root Directory
@@ -145,6 +149,13 @@ typedef struct root_directory
 
 } __attribute__ ((packed)) fat_root_t;
 static fat_root_t root_dir;
+
+typedef struct sub_directory
+{
+	FileEntry_t entry[FAT_SECTOR_SIZE / sizeof(FileEntry_t)]; // 16
+
+} __attribute__ ((packed)) fat_subdir_t;
+static fat_subdir_t subdir;
 
 // bool Read_FAT();
 // bool load_file(char *stringa, uint8_t *buffer);
@@ -191,6 +202,10 @@ bool fat12_init()
 
 	// root directory
 	read_sectors((uintptr_t)&root_dir,FAT_ROOT_REGION_START,FAT_ROOT_SIZE);
+
+	// set current path
+	curr_dir = FAT_ROOT_REGION_START;
+	strcpy(curr_path,"/");
 
 	return true;
 }
@@ -258,6 +273,7 @@ int fat12_read_clusters(char* buf, uint32_t cstart)
 		uintptr_t addr = (uintptr_t) buf + i * FAT_SECTOR_SIZE;
 		// remember to recalculate cstart
 		read_sectors(addr, clust + FAT_DATA_REGION_START - 2, 1);
+		enable();
 		if (fat12_next_sector(&clust, clust) == false)
 			break;
 	}
@@ -322,8 +338,9 @@ bool fat12_show_file_entry(FileEntry_t *f)
 	fat_time_t FileTime;
 	char name[13];
 
-	// Do not print the disk label
-	if (!(f->attribute.label))
+	// Do not print the disk label & deleted files
+	if (!(f->attribute.label) && strlen(f->name) != 0 &&
+		(((unsigned char)f->name[0] & 0x000000E5) != 0xE5))
 	{
 		int_to_date(&FileDate, f->date);
 		int_to_time(&FileTime, f->time);
@@ -358,8 +375,78 @@ bool fat12_show_file_entry(FileEntry_t *f)
 
 void fat12_ls()
 {
-	for (int i = 0; i < FAT_NUM_ROOT_ENTRY; ++i)
-		fat12_show_file_entry(&root_dir.entry[i]);
+	if (curr_dir == FAT_ROOT_REGION_START)
+		for (int i = 0; i < FAT_NUM_ROOT_ENTRY; ++i)
+			fat12_show_file_entry(&root_dir.entry[i]);
+	else
+		for (int i = 0; i < FAT_NUM_DIR_ENTRY; ++i)
+			fat12_show_file_entry(&subdir.entry[i]);
+}
+
+void fat12_set_dir(int new_dir, char* action)
+{
+	if (curr_dir == FAT_ROOT_REGION_START){
+		curr_dir = new_dir;
+		strcpy(curr_path,"/");
+		strcat(curr_path,action);
+	} else {
+
+		if (new_dir == 0)
+			new_dir = FAT_ROOT_REGION_START;
+		curr_dir = new_dir;
+
+		if (strcmp(action,".") == 0)
+			; // do nothing
+		else if (strcmp(action,"..") == 0) {
+			reverse(curr_path);
+			char* tmp_path = curr_path;
+			strsep(&tmp_path,"/");
+			reverse(tmp_path);
+			strcpy(curr_path,tmp_path);
+			if (curr_dir == FAT_ROOT_REGION_START)
+				strcpy(curr_path,"/");
+		} else {
+			strcat(curr_path,"/");
+			strcat(curr_path,action);
+		}
+	}
+}
+
+FileEntry_t* fat12_find_entry(char* folder)
+{
+	if (curr_dir == FAT_ROOT_REGION_START){
+		for (int i = 0; i < FAT_NUM_ROOT_ENTRY; ++i){
+			char entry_name[13]; // with dot(.)!
+			fat12_construct_file_name(entry_name,&root_dir.entry[i]);
+			if (!(root_dir.entry[i].attribute.directory && strcmp(folder,entry_name) == 0))
+				continue;
+			return &root_dir.entry[i];
+		}
+	} else {
+		fat12_read_clusters((char*)&subdir,curr_dir);
+		for (int i = 0; i < FAT_NUM_DIR_ENTRY; ++i){
+			char entry_name[13]; // with dot(.)!
+			fat12_construct_file_name(entry_name,&subdir.entry[i]);
+			if (!(subdir.entry[i].attribute.directory && strcmp(folder,entry_name) == 0))
+				continue;
+			return &subdir.entry[i];
+		}
+	}
+	return NULL;
+}
+
+bool fat12_cd(char* folder)
+{
+	FileEntry_t* fe = fat12_find_entry(folder);
+	if (fe == NULL){
+		put_error("No such file or directory!");
+		return false;
+	}
+	fat12_set_dir(fe->startCluster,folder);
+	fat12_read_clusters((char*)&subdir,fe->startCluster);
+	for (int i = 0; i < FAT_NUM_DIR_ENTRY; ++i)
+		fat12_show_file_entry(&subdir.entry[i]);
+	return true;
 }
 
 #endif // FAT12_H

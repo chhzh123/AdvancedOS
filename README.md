@@ -61,6 +61,9 @@ The operating system named "CHZOS" enables **32-bit protected mode**.
 	- Pthread-like multi-threading support
 	- Time-sharing, multi-tasking
 	- Currently use round-robin scheduling
+* File System
+	- FAT12 format
+	- Support basic file operations such as `cd`, `ls`, `rm`, `cp`, etc.
 * User programs
 	- ELF file support
 	- Standard libraries support (I/O, string, etc.)

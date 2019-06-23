@@ -51,21 +51,15 @@ kernel.o : kernel.c
 	$(CC) $(CCFLAGS) $< -o $(BUILD)/$@
 
 # user programs
-mkprg: buildprg programs
+prg: buildprg
+	-rm $(HARDDISK)
 	/sbin/mkfs.msdos -C $(HARDDISK) 1440
-	dd if=$(BUILD)/$(USRDIR)/prg1.com of=$(HARDDISK) conv=notrunc
-	dd if=$(BUILD)/$(USRDIR)/prg2.com of=$(HARDDISK) seek=2 conv=notrunc
-	dd if=$(BUILD)/$(USRDIR)/prg3.com of=$(HARDDISK) seek=4 conv=notrunc
-	dd if=$(BUILD)/$(USRDIR)/prg4.com of=$(HARDDISK) seek=6 conv=notrunc
-	dd if=$(BUILD)/$(USRDIR)/box.com of=$(HARDDISK) seek=8 conv=notrunc
-	dd if=$(BUILD)/$(USRDIR)/syscall.com of=$(HARDDISK) seek=10 conv=notrunc
-	dd if=$(BUILD)/$(USRDIR)/fork.out of=$(HARDDISK) seek=12 conv=notrunc
-	dd if=$(BUILD)/$(USRDIR)/fork2.out of=$(HARDDISK) seek=42 conv=notrunc
-	dd if=$(BUILD)/$(USRDIR)/bank.out of=$(HARDDISK) seek=72 conv=notrunc
-	dd if=$(BUILD)/$(USRDIR)/fruit.out of=$(HARDDISK) seek=102 conv=notrunc
-	dd if=$(BUILD)/$(USRDIR)/pro-con.out of=$(HARDDISK) seek=132 conv=notrunc
-	dd if=$(BUILD)/$(USRDIR)/hello.out of=$(HARDDISK) seek=162 conv=notrunc
-	dd if=$(BUILD)/$(USRDIR)/matmal.out of=$(HARDDISK) seek=192 conv=notrunc
+	-mkdir disk
+	mount $(HARDDISK) disk
+	cp $(BUILD)/usr/*.com disk 
+	cp $(BUILD)/usr/*.out disk
+	umount disk
+	-rm -rf disk
 
 programs: $(foreach prg,$(USR),$(USRDIR)/$(prg)) $(DEBUGFILES)
 

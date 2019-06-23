@@ -11,7 +11,6 @@
 #include "string.h"
 #include "user.h"
 
-const char* PROMPT_INFO = "chzos> ";
 const char* HELLO_INFO = "\
      =====    ||     ||    =======\n\
    //         ||     ||        //\n\
@@ -43,8 +42,11 @@ void command_not_found(char* str)
 void put_prompt()
 {
 	set_color(GREEN,BLACK);
-	print(PROMPT_INFO);
+	printf("CHZOS:");
+	set_color(LIGHT_BLUE,BLACK);
+	printf("%s",curr_path);
 	set_color(WHITE,BLACK);
+	printf("$ ");
 }
 
 void terminal_loop()
@@ -63,7 +65,9 @@ void terminal_loop()
 			clear_screen();
 		else if (strcmp(str,"ls") == 0)
 			fat12_ls();
-		else if (strcmp(str,"tick") == 0)
+		else if (strcmp(str,"cd") == 0){
+			fat12_cd(rest);
+		} else if (strcmp(str,"tick") == 0)
 			printf("%d\n",get_tick_count());
 		else if (strcmp(str,"read") == 0)
 			read_disk_test();
