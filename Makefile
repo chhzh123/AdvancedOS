@@ -27,41 +27,50 @@ CCFLAGS += -DDEBUG
 DEBUGFILES = kernel.s
 endif
 
-all: build programs
+all: build osker
 	-rm -f $(IMG)
 	/sbin/mkfs.msdos -C $(IMG) 1440
 	dd if=$(BUILD)/bootloader.bin of=$(IMG) conv=notrunc
 	dd if=$(BUILD)/kernel.bin of=$(IMG) seek=1 conv=notrunc # 2nd sector
-# 	/sbin/mkfs.msdos -C $(HARDDISK) 1440
-# 	dd if=$(BUILD)/$(USRDIR)/prg1.com of=$(HARDDISK) conv=notrunc
-# 	dd if=$(BUILD)/$(USRDIR)/prg2.com of=$(HARDDISK) seek=2 conv=notrunc
-# 	dd if=$(BUILD)/$(USRDIR)/prg3.com of=$(HARDDISK) seek=4 conv=notrunc
-# 	dd if=$(BUILD)/$(USRDIR)/prg4.com of=$(HARDDISK) seek=6 conv=notrunc
-# 	dd if=$(BUILD)/$(USRDIR)/box.com of=$(HARDDISK) seek=8 conv=notrunc
-# 	dd if=$(BUILD)/$(USRDIR)/syscall.com of=$(HARDDISK) seek=10 conv=notrunc
-# 	dd if=$(BUILD)/$(USRDIR)/fork.out of=$(HARDDISK) seek=12 conv=notrunc
-# 	dd if=$(BUILD)/$(USRDIR)/fork2.out of=$(HARDDISK) seek=42 conv=notrunc
-# 	dd if=$(BUILD)/$(USRDIR)/bank.out of=$(HARDDISK) seek=72 conv=notrunc
-# 	dd if=$(BUILD)/$(USRDIR)/fruit.out of=$(HARDDISK) seek=102 conv=notrunc
-# 	dd if=$(BUILD)/$(USRDIR)/pro-con.out of=$(HARDDISK) seek=132 conv=notrunc
-# 	dd if=$(BUILD)/$(USRDIR)/hello.out of=$(HARDDISK) seek=162 conv=notrunc
-# 	dd if=$(BUILD)/$(USRDIR)/matmal.out of=$(HARDDISK) seek=192 conv=notrunc
 
 build:
 	-mkdir $(BUILD)
-	-mkdir $(BUILD)/$(USRDIR)
 
-programs: $(KERNEL) $(foreach prg,$(USR),$(USRDIR)/$(prg)) $(DEBUGFILES)
+osker: $(KERNEL)
 
 bootloader.bin: bootloader.asm
 	$(AS) -fbin $< -o $(BUILD)/$@
+
 kernel.bin: kernel_entry.o kernel.o
 	$(LD) $(LDFLAGS) -Ttext 0x7e00 $(BUILD)/kernel_entry.o $(BUILD)/kernel.o -o $(BUILD)/$@
 
-%.o : %.asm
+kernel_entry.o : kernel_entry.asm
 	$(AS) $(ASFLAGS) $< -o $(BUILD)/$@
-%.o : %.c
+
+kernel.o : kernel.c
 	$(CC) $(CCFLAGS) $< -o $(BUILD)/$@
+
+# user programs
+mkprg: buildprg programs
+	/sbin/mkfs.msdos -C $(HARDDISK) 1440
+	dd if=$(BUILD)/$(USRDIR)/prg1.com of=$(HARDDISK) conv=notrunc
+	dd if=$(BUILD)/$(USRDIR)/prg2.com of=$(HARDDISK) seek=2 conv=notrunc
+	dd if=$(BUILD)/$(USRDIR)/prg3.com of=$(HARDDISK) seek=4 conv=notrunc
+	dd if=$(BUILD)/$(USRDIR)/prg4.com of=$(HARDDISK) seek=6 conv=notrunc
+	dd if=$(BUILD)/$(USRDIR)/box.com of=$(HARDDISK) seek=8 conv=notrunc
+	dd if=$(BUILD)/$(USRDIR)/syscall.com of=$(HARDDISK) seek=10 conv=notrunc
+	dd if=$(BUILD)/$(USRDIR)/fork.out of=$(HARDDISK) seek=12 conv=notrunc
+	dd if=$(BUILD)/$(USRDIR)/fork2.out of=$(HARDDISK) seek=42 conv=notrunc
+	dd if=$(BUILD)/$(USRDIR)/bank.out of=$(HARDDISK) seek=72 conv=notrunc
+	dd if=$(BUILD)/$(USRDIR)/fruit.out of=$(HARDDISK) seek=102 conv=notrunc
+	dd if=$(BUILD)/$(USRDIR)/pro-con.out of=$(HARDDISK) seek=132 conv=notrunc
+	dd if=$(BUILD)/$(USRDIR)/hello.out of=$(HARDDISK) seek=162 conv=notrunc
+	dd if=$(BUILD)/$(USRDIR)/matmal.out of=$(HARDDISK) seek=192 conv=notrunc
+
+programs: $(foreach prg,$(USR),$(USRDIR)/$(prg)) $(DEBUGFILES)
+
+buildprg:
+	-mkdir $(BUILD)/$(USRDIR)
 %.com : %.asm
 	$(AS) $< -o $(BUILD)/$@
 
@@ -110,4 +119,7 @@ bochs:
 .PHONY : clean
 clean :
 	-rm -rf $(BUILD)
-	-rm -f *.o *.bin *.com *.elf *.s $(IMG) $(HARDDISK) $(PROGS) *.lock bochsout.txt
+	-rm -f *.o *.bin *.com *.elf *.s $(IMG) $(PROGS) *.lock bochsout.txt
+
+cleandisk:
+	-rm $(HARDDISK)

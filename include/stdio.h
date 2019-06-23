@@ -16,6 +16,7 @@
 
 #define MAX_BUF_LEN 1000
 
+#define DEFAULT_COLOR 0x0007
 enum Color{
 	BLACK = 0,
 	BLUE = 1,
@@ -441,6 +442,16 @@ void scanf(const char* format, ...) {
 void put_error(char* str)
 {
 	set_color(RED,BLACK);
+	print("Error: ");
+	print(str);
+	print("\n");
+	set_color(WHITE,BLACK);
+}
+
+void put_exception(char* str)
+{
+	set_color(RED,BLACK);
+	print("Exception: ");
 	print(str);
 	print("\n");
 	set_color(WHITE,BLACK);

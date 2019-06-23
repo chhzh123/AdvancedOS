@@ -14,18 +14,18 @@
 // sets count bytes of dest to val
 void *memset(void *dest, char val, size_t count)
 {
-    unsigned char *temp = (unsigned char *)dest;
+	unsigned char *temp = (unsigned char *)dest;
 	for( ; count != 0; count--, temp[count] = val);
 	return dest;
 }
 
 void *memcpy(void *dst, const void *src, size_t n) {
-    const char *s = src;
-    char *d = dst;
-    while (n-- > 0) {
-        *d ++ = *s ++;
-    }
-    return dst;
+	const char *s = src;
+	char *d = dst;
+	while (n-- > 0) {
+		*d ++ = *s ++;
+	}
+	return dst;
 }
 
 size_t strlen(const char* str) 
@@ -103,7 +103,7 @@ void reverse(char* s)
 }
 
 // Find the first occurrence of a character in a string.
-char *strchr (const char *s, char c)
+char *strchr(const char *s, char c)
 {
 	for ( ; *s != c; ++s )
 		if( *s == '\0' )
@@ -135,35 +135,54 @@ void itoa(unsigned i, char* buf, unsigned base) {
 	char tbuf[32];
 	char bchars[] = {'0','1','2','3','4','5','6','7','8','9','A','B','C','D','E','F'};
 
-    int pos = 0;
-    int opos = 0;
-    int top = 0;
+	int pos = 0;
+	int opos = 0;
+	int top = 0;
 
-    if (i == 0 || base > 16) {
-        buf[0] = '0';
-        buf[1] = '\0';
-        return;
-    }
+	if (i == 0 || base > 16) {
+		buf[0] = '0';
+		buf[1] = '\0';
+		return;
+	}
 
-    while (i != 0) {
-        tbuf[pos] = bchars[i % base];
-        pos++;
-        i /= base;
-    }
-    top = pos--;
-    for (opos = 0; opos < top; pos--, opos++) {
-        buf[opos] = tbuf[pos];
-    }
-    buf[opos] = 0;
+	while (i != 0) {
+		tbuf[pos] = bchars[i % base];
+		pos++;
+		i /= base;
+	}
+	top = pos--;
+	for (opos = 0; opos < top; pos--, opos++) {
+		buf[opos] = tbuf[pos];
+	}
+	buf[opos] = 0;
 }
 
 void itoa_s(int i, char* buf, unsigned base) {
-    if (base > 16) return;
-    if (i < 0) {
-        *buf++ = '-';
-        i *= -1;
-    }
-    itoa(i,buf,base);
+	if (base > 16) return;
+	if (i < 0) {
+		*buf++ = '-';
+		i *= -1;
+	}
+	itoa(i,buf,base);
+}
+
+
+char* tolower(char* str)
+{
+	int len = strlen(str);
+	for (int i = 0; i < len; ++i)
+		if ((str[i] >= 'A') && (str[i] <= 'Z'))
+			str[i] += ('a' - 'A');
+	return str;
+}
+
+char* toupper(char* str)
+{
+	int len = strlen(str);
+	for (int i = 0; i < len; ++i)
+		if ((str[i] >= 'a') && (str[i] <= 'z'))
+			str[i] += ('A' - 'a');
+	return str;
 }
 
 bool isalpha(char c)

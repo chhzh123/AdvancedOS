@@ -24,7 +24,7 @@ const char* HELP_INFO =
 These shell commands are defined internally. Type 'help' to see this list.\n\
 \n\
  help       -- Show this list\n\
- show       -- Show existing programs\n\
+ ls         -- Show existing files\n\
  tick       -- Show current execution time\n\
  read       -- Read disk and print out\n\
  sys        -- Test system call in user mode\n\
@@ -53,34 +53,22 @@ void terminal_loop()
 		put_prompt();
 		char str[MAX_BUF_LEN];
 		getline(str);
+		char* rest = str;
+		strsep(&rest," ");
 		if (strcmp(str,"help") == 0)
 			print(HELP_INFO);
 		else if (strcmp(str,"exit") == 0)
 			break;
 		else if (strcmp(str,"clr") == 0)
 			clear_screen();
-		else if (strcmp(str,"show") == 0)
-			show_user_prg();
+		else if (strcmp(str,"ls") == 0)
+			fat12_ls();
 		else if (strcmp(str,"tick") == 0)
 			printf("%d\n",get_tick_count());
 		else if (strcmp(str,"read") == 0)
 			read_disk_test();
-		else if (strcmp(str,"sys") == 0)
-			test_system_call();
-		else if (strcmp(str,"exec") == 0)
-			create_user_proc();
-		else if (strlen(str) >= 4){
-			char cpystr[MAX_BUF_LEN];
-			strncpy(cpystr,str,4);
-			if (strcmp(cpystr,"exec") == 0){
-				int num;
-				sscanf(str,"exec %d",&num);
-				if (num <= 6)
-					exec_user_prg(num);
-				else
-					exec_elf(num);
-			} else
-				command_not_found(str);
+		else if (strcmp(str,"exec") == 0){
+			exec_user_prg(rest);
 		} else
 			command_not_found(str);
 	}
