@@ -21,6 +21,15 @@ static inline void insw(uint32_t port, uintptr_t addr, int cnt) {
     	);
 }
 
+static inline void outsw(uint32_t port, uintptr_t addr, int cnt) {
+    __asm__ volatile (
+    	"mov esi, eax\n\t" // source
+    	"rep outsw\n\t" // repeat output string
+    	:
+    	:"a"(addr),"d"(port),"c"(cnt)
+    	);
+}
+
 /* waitdisk - wait for disk ready */
 static inline void waitdisk(void) {
 	while ((port_byte_in(0x1F7) & 0xC0) != 0x40)
@@ -52,6 +61,31 @@ static void read_sectors(uintptr_t addr, uint32_t startsec, uint32_t cnt)
 		readsect(TMP_USER_ADDR + i * SECTSIZE, startsec + i);
 		memcpy((void*)addr, (const void*)TMP_USER_ADDR, cnt * SECTSIZE);
 	}
+}
+
+static void writesect(uintptr_t src, uint32_t secno) {
+
+	disable(); // IMPORTANT!!!
+
+    port_byte_out(0x1F2, 1);                         // count = 1
+    port_byte_out(0x1F3, secno & 0xFF);
+    port_byte_out(0x1F4, (secno >> 8) & 0xFF);
+    port_byte_out(0x1F5, (secno >> 16) & 0xFF);
+    port_byte_out(0x1F6, ((secno >> 24) & 0xF) | 0xE0);
+    port_byte_out(0x1F7, 0x30);                      // cmd 0x30 - write sectors
+    // wait for disk to be ready
+    waitdisk();
+
+    // write a sector
+    outsw(0x1F0, src, SECTSIZE / 2);
+}
+
+// write @addr to @startsec
+static void write_sectors(uintptr_t addr, uint32_t startsec, uint32_t cnt)
+{
+	for (int i = 0; i < cnt; i++)
+		writesect(addr + i * SECTSIZE,startsec);
+	enable();
 }
 
 void show_one_sector(uintptr_t addr)

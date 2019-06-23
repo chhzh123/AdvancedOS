@@ -39,7 +39,7 @@ unsigned long idt_ptr[2];
 void put_error(); // defined in "stdio.h"
 // default handler to catch unhandled system interrupts.
 void default_handler () {
-	put_error("Error: Unhandled Exception!");
+	put_exception("Unhandled Exception!");
 	for(;;);
 }
 

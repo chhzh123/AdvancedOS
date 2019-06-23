@@ -67,6 +67,8 @@ void terminal_loop()
 			fat12_ls();
 		else if (strcmp(str,"cd") == 0){
 			fat12_cd(rest);
+		} else if (strcmp(str,"rm") == 0){
+			fat12_rm(rest);
 		} else if (strcmp(str,"tick") == 0)
 			printf("%d\n",get_tick_count());
 		else if (strcmp(str,"read") == 0)

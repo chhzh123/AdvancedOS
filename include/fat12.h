@@ -280,6 +280,26 @@ int fat12_read_clusters(char* buf, uint32_t cstart)
 	return i;
 }
 
+int fat12_write_clusters(char* buf, uint32_t cstart)
+{
+
+	int i;
+	uint32_t clust = cstart;
+	for (i = 0; true; ++i)
+	{
+#ifdef DEBUG
+		printf("Write cluster: %d\n", clust);
+#endif
+		uintptr_t addr = (uintptr_t) buf + i * FAT_SECTOR_SIZE;
+		// remember to recalculate cstart
+		write_sectors(addr, clust + FAT_DATA_REGION_START - 2, 1);
+		enable();
+		if (fat12_next_sector(&clust, clust) == false)
+			break;
+	}
+	return i;
+}
+
 bool fat12_read_file(char* filename, char* addr)
 {
 #ifdef DEBUG
@@ -340,7 +360,7 @@ bool fat12_show_file_entry(FileEntry_t *f)
 
 	// Do not print the disk label & deleted files
 	if (!(f->attribute.label) && strlen(f->name) != 0 &&
-		(((unsigned char)f->name[0] & 0x000000E5) != 0xE5))
+		((f->name[0] & 0x000000E5) != 0xE5))
 	{
 		int_to_date(&FileDate, f->date);
 		int_to_time(&FileTime, f->time);
@@ -371,16 +391,6 @@ bool fat12_show_file_entry(FileEntry_t *f)
 		return true;
 	}
 	return false;
-}
-
-void fat12_ls()
-{
-	if (curr_dir == FAT_ROOT_REGION_START)
-		for (int i = 0; i < FAT_NUM_ROOT_ENTRY; ++i)
-			fat12_show_file_entry(&root_dir.entry[i]);
-	else
-		for (int i = 0; i < FAT_NUM_DIR_ENTRY; ++i)
-			fat12_show_file_entry(&subdir.entry[i]);
 }
 
 void fat12_set_dir(int new_dir, char* action)
@@ -418,7 +428,7 @@ FileEntry_t* fat12_find_entry(char* folder)
 		for (int i = 0; i < FAT_NUM_ROOT_ENTRY; ++i){
 			char entry_name[13]; // with dot(.)!
 			fat12_construct_file_name(entry_name,&root_dir.entry[i]);
-			if (!(root_dir.entry[i].attribute.directory && strcmp(folder,entry_name) == 0))
+			if (strcmp(folder,entry_name) != 0)
 				continue;
 			return &root_dir.entry[i];
 		}
@@ -427,12 +437,22 @@ FileEntry_t* fat12_find_entry(char* folder)
 		for (int i = 0; i < FAT_NUM_DIR_ENTRY; ++i){
 			char entry_name[13]; // with dot(.)!
 			fat12_construct_file_name(entry_name,&subdir.entry[i]);
-			if (!(subdir.entry[i].attribute.directory && strcmp(folder,entry_name) == 0))
+			if (strcmp(folder,entry_name) != 0)
 				continue;
 			return &subdir.entry[i];
 		}
 	}
 	return NULL;
+}
+
+void fat12_ls()
+{
+	if (curr_dir == FAT_ROOT_REGION_START)
+		for (int i = 0; i < FAT_NUM_ROOT_ENTRY; ++i)
+			fat12_show_file_entry(&root_dir.entry[i]);
+	else
+		for (int i = 0; i < FAT_NUM_DIR_ENTRY; ++i)
+			fat12_show_file_entry(&subdir.entry[i]);
 }
 
 bool fat12_cd(char* folder)
@@ -444,8 +464,22 @@ bool fat12_cd(char* folder)
 	}
 	fat12_set_dir(fe->startCluster,folder);
 	fat12_read_clusters((char*)&subdir,fe->startCluster);
-	for (int i = 0; i < FAT_NUM_DIR_ENTRY; ++i)
-		fat12_show_file_entry(&subdir.entry[i]);
+	fat12_ls();
+	return true;
+}
+
+bool fat12_rm(char* filename)
+{
+	FileEntry_t* fe = fat12_find_entry(filename);
+	if (fe == NULL){
+		put_error("No such file or directory!");
+		return false;
+	}
+	fe->name[0] = 0x000000E5;
+	// if (curr_dir == FAT_ROOT_REGION_START)
+	// 	write_sectors((uintptr_t)&root_dir,FAT_ROOT_REGION_START,FAT_ROOT_SIZE);
+	// else
+	// 	fat12_write_clusters((char*)&subdir,curr_dir);
 	return true;
 }
 
