@@ -34,6 +34,7 @@
 #define FAT_ROOT_SIZE 14
 #define FAT_NUM_ROOT_ENTRY 224
 #define FAT_NUM_DIR_ENTRY 16
+#define FAT_NUM_ENTRY 3072
 
 #define FAT_BOOTSECTOR_START 0
 #define FAT_ENTRY_START 1
@@ -95,7 +96,7 @@ typedef struct logic_fat
 {
 	// only the first 3B are used (24bits)
 	// the first two clusters (0,1) are useless
-	uint32_t entry [3072];
+	uint32_t entry [FAT_NUM_ENTRY]; // 3072
 
 } __attribute__ ((packed)) fat12_t;
 static fat12_t fat;
@@ -212,7 +213,7 @@ bool fat12_init()
 
 void int_to_date(fat_date_t* d, uint16_t date)
 {
-	d->year  = date/512;
+	d->year  = date / 512;
 	d->month = (date - (d->year * 512)) / 32;
 	d->day   = date - (d->year * 512) - (d->month * 32);
 }
@@ -222,6 +223,16 @@ void int_to_time(fat_time_t* time, uint16_t t)
 	time->hour   = t / 2048;
 	time->minute = (t - (time->hour * 2048)) / 32;
 	time->second = (t - (time->hour * 2048) - (time->minute * 32)) * 2;
+}
+
+int date_to_int(int year, int month, int day)
+{
+	return (((year-1980) << 9) + (month << 5) + day);
+}
+
+int time_to_int(int hour, int minute, int second)
+{
+	return ((hour << 11) + (minute << 5) + second / 2);
 }
 
 char* fat12_construct_file_name(char* name, FileEntry_t *f)
@@ -298,6 +309,40 @@ int fat12_write_clusters(char* buf, uint32_t cstart)
 			break;
 	}
 	return i;
+}
+
+void fat12_write_back_fat()
+{
+	int i, j;
+
+	// Converts the FAT from the logical structure into physical structure
+	for(i = 0, j = 0; j < 3072; j += 2)
+	{
+		phys_fat.entry[i++] = (uint8_t)fat.entry[j];
+		phys_fat.entry[i++] = (uint8_t)((fat.entry[j]>>8)&(0x0F))|
+									((fat.entry[j+1]<<4)&(0xF0));
+		phys_fat.entry[i++] = (uint8_t)(fat.entry[j+1]>>4);
+	}
+
+	// Copy FAT to the disk
+	write_sectors((uintptr_t)&fat, FAT_ENTRY_START, bootsector.BPB_NumFATs);
+}
+
+void fat12_del_fat_entry(uint32_t cstart)
+{
+	uint32_t clust = cstart, new_clust;
+	for (int i = 0; true; ++i)
+	{
+#ifdef DEBUG
+		printf("Del cluster: %d\n", clust);
+#endif
+		bool flag = fat12_next_sector(&new_clust, clust);
+		memset((void*)fat.entry[clust],0,sizeof(fat.entry[clust]));
+		clust = new_clust;
+		if (!flag)
+			break;
+	}
+	fat12_write_back_fat();
 }
 
 bool fat12_read_file(char* filename, char* addr)
@@ -476,11 +521,67 @@ bool fat12_rm(char* filename)
 		return false;
 	}
 	fe->name[0] = 0x000000E5;
-	// if (curr_dir == FAT_ROOT_REGION_START)
-	// 	write_sectors((uintptr_t)&root_dir,FAT_ROOT_REGION_START,FAT_ROOT_SIZE);
-	// else
-	// 	fat12_write_clusters((char*)&subdir,curr_dir);
+	if (curr_dir == FAT_ROOT_REGION_START)
+		write_sectors((uintptr_t)&root_dir,FAT_ROOT_REGION_START,FAT_ROOT_SIZE);
+	else
+		fat12_write_clusters((char*)&subdir,curr_dir);
+	fat12_del_fat_entry(fe->startCluster);
 	return true;
+}
+
+bool fat12_cp(char* src,char* dst)
+{
+	// TODO
+	return true;
+}
+
+void fat12_create_file(uintptr_t addr, int size, char* name)
+{
+	int numCluster = (size % FAT_SECTOR_SIZE == 0 ?
+		size / FAT_SECTOR_SIZE :
+		size / FAT_SECTOR_SIZE + 1);
+	printf("NumCluster:%d\n", numCluster);
+
+	int cnt = 0, prevIndex = -1, cstart = 0;
+	for (int i = 2; i < FAT_NUM_ENTRY; ++i) // do NOT start from 0!
+		if (fat.entry[i] == 0){
+			printf("Fat:%d\n", i);
+			if (cnt == 0)
+				cstart = i;
+			if (prevIndex != -1)
+				fat.entry[prevIndex] = i;
+			prevIndex = i;
+			// write_sectors(addr+i*FAT_SECTOR_SIZE,i+FAT_DATA_REGION_START-2,1);
+			cnt++;
+			if (cnt == numCluster){
+				fat.entry[i] = 0x0FFF;
+				break;
+			}
+		}
+	// fat12_write_back_fat();
+
+	printf("%s\n", name);
+	for (int i = 0; i < FAT_NUM_ROOT_ENTRY; ++i)
+		if (root_dir.entry[i].name[0] == 0x00000000){
+			printf("i:%d\n", i);
+			char tmp_name[20];
+			strcpy(tmp_name,name);
+			char* ext = tmp_name;
+			strsep(&ext,".");
+			strcpy(root_dir.entry[i].name,tmp_name);
+			for (int j = strlen(root_dir.entry[i].name); j < 8; ++j)
+				root_dir.entry[i].name[j] = ' ';
+			strcpy(root_dir.entry[i].extension,ext);
+			for (int j = strlen(root_dir.entry[i].extension); j < 3; ++j)
+				root_dir.entry[i].extension[j] = ' ';
+			root_dir.entry[i].attribute.archive = true;
+			root_dir.entry[i].startCluster = cstart;
+			root_dir.entry[i].fileLength = size;
+			root_dir.entry[i].date = date_to_int(2019,6,23);
+			root_dir.entry[i].time = time_to_int(0,0,0);
+			break;
+		}
+	// write_sectors((uintptr_t)&root_dir,FAT_ROOT_REGION_START,FAT_ROOT_SIZE);
 }
 
 #endif // FAT12_H

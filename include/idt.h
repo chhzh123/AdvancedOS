@@ -38,9 +38,12 @@ unsigned long idt_ptr[2];
 
 void put_error(); // defined in "stdio.h"
 // default handler to catch unhandled system interrupts.
-void default_handler () {
-	put_exception("Unhandled Exception!");
-	for(;;);
+__attribute__((__cdecl__))
+void default_handler (unsigned int cs, unsigned int eip, unsigned int eflags) {
+	char str[100];
+	sprintf(str,"Unhandled Exception!\ncs:eip=%xh:%xh, eflags=%xh",cs,eip,eflags);
+	put_exception(str);
+	for (;;);
 }
 
 // installs interrupt handler. When INT is fired, it will call this callback

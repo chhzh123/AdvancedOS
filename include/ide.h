@@ -66,6 +66,7 @@ static void read_sectors(uintptr_t addr, uint32_t startsec, uint32_t cnt)
 static void writesect(uintptr_t src, uint32_t secno) {
 
 	disable(); // IMPORTANT!!!
+	waitdisk();
 
     port_byte_out(0x1F2, 1);                         // count = 1
     port_byte_out(0x1F3, secno & 0xFF);
@@ -80,11 +81,11 @@ static void writesect(uintptr_t src, uint32_t secno) {
     outsw(0x1F0, src, SECTSIZE / 2);
 }
 
-// write @addr to @startsec
+// write @addr to [@startsec,@startsec+@cnt]
 static void write_sectors(uintptr_t addr, uint32_t startsec, uint32_t cnt)
 {
 	for (int i = 0; i < cnt; i++)
-		writesect(addr + i * SECTSIZE,startsec);
+		writesect(addr + i * SECTSIZE, startsec + i);
 	enable();
 }
 
