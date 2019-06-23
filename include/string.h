@@ -102,10 +102,39 @@ void reverse(char* s)
 	}
 }
 
-char tbuf[32];
-char bchars[] = {'0','1','2','3','4','5','6','7','8','9','A','B','C','D','E','F'};
+// Find the first occurrence of a character in a string.
+char *strchr (const char *s, char c)
+{
+	for ( ; *s != c; ++s )
+		if( *s == '\0' )
+			return( NULL );
+	return (char*) s;
+}
+
+char *strsep(char **str, const char *delims)
+{
+	char* token;
+	if (!*str) {
+		/* No more tokens */
+		return NULL;
+	}
+	token = *str;
+	while (**str != '\0') {
+		if (strchr(delims, **str)) {
+			**str = '\0';
+			(*str)++;
+			return token;
+		}
+		(*str)++;
+	}
+	*str = NULL;
+	return token;
+}
 
 void itoa(unsigned i, char* buf, unsigned base) {
+	char tbuf[32];
+	char bchars[] = {'0','1','2','3','4','5','6','7','8','9','A','B','C','D','E','F'};
+
     int pos = 0;
     int opos = 0;
     int top = 0;
