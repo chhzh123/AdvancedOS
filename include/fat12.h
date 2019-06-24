@@ -557,7 +557,7 @@ bool fat12_cd(char* folder)
 	}
 	fat12_set_dir(fe->startCluster,folder);
 	fat12_read_clusters((char*)&subdir,fe->startCluster);
-	fat12_ls();
+	// fat12_ls();
 	return true;
 }
 

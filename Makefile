@@ -61,6 +61,7 @@ prg:
 	mkdir disk/testfold
 	cp $(BUILD)/usr/*.com disk 
 	cp $(BUILD)/usr/*.out disk
+	cp usr/test.txt disk/myfolder/folder/test.txt
 	umount disk
 	-rm -rf disk
 

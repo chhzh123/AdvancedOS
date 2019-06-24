@@ -4,13 +4,13 @@
 #include "stdio.h"
 #include "file.h"
 
-int main() 
+int main()
 {
     // Declare the file pointer 
     FILE* fp;
 
     // Get the data to be written in file 
-    char dataToBeWritten[50] = "This is test message!"; 
+    char dataToBeWritten[50] = "This is a test message!"; 
   
     // Open the non-existing file with fopen()
     fp = fopen("testmsg.txt", "w");
@@ -39,7 +39,7 @@ int main()
         dataToBeRead[strlen(dataToBeWritten)] = '\0';
 
         printf("========= Data read out =========\n\n");
-        printf("%s\n", dataToBeRead);
+        printf("%s\n\n", dataToBeRead);
         printf("=================================\n\n");
 
         // Closing the file using fclose()
