@@ -87,6 +87,7 @@ typedef struct process {
 	int    priority;
 	int    status;
 	int    tick;
+	int    terminal;
 } process;
 
 process proc_list[MAX_PROCESS];
@@ -130,6 +131,7 @@ void proc_init()
 		proc_list[i].priority = PRIOR_USER;
 		proc_list[i].parent = NULL;
 		proc_list[i].next = NULL;
+		proc_list[i].terminal = 0;
 	}
 }
 
@@ -147,6 +149,7 @@ process* proc_alloc()
 	return NULL;
 }
 
+int get_current_terminal();
 void user_process_return();
 process* proc_create(uint32_t cs, uint32_t ds, uintptr_t addr)
 {
@@ -177,6 +180,7 @@ process* proc_create(uint32_t cs, uint32_t ds, uintptr_t addr)
 	stack--;
 	*stack = (uintptr_t) user_process_return; // return address
 	pp->regImg.user_esp = (uintptr_t) stack;
+	pp->terminal = get_current_terminal();
 
 #ifdef DEBUG
 	printf("Create process %d!\n", pp->pid);
@@ -260,6 +264,7 @@ void save_proc(
 #endif
 }
 
+void set_tmp_terminal(int i);
 // READY -> RUNNING && RUNNING -> READY
 void proc_switch(process* pp)
 {
@@ -282,6 +287,8 @@ void proc_switch(process* pp)
 #ifdef DEBUG
 	print_proc_info(pp);
 #endif
+	set_tmp_terminal(pp->terminal);
+
 	// set up kernel stack
 	int stack = 0;
 	__asm__ volatile ("mov eax, esp":"=a"(stack)::);

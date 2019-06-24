@@ -33,7 +33,7 @@
 load_kernel:
 	show_string_rm MSG_LOAD_KERNEL, 1, 0
 	load_sectors KERNEL_OFFSET, 35, 0, 0, 2
-	load_sectors KERNEL_OFFSET+SECTOR_SIZE*35, 25, 1, 0, 1
+	load_sectors KERNEL_OFFSET+SECTOR_SIZE*35, 30, 1, 0, 1
 	ret
 
 ;;;;; Swich from real mode to protected mode ;;;;;

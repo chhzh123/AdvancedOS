@@ -55,6 +55,26 @@
 char curr_path[50];
 int curr_dir;
 
+void set_curr_dir(int dir)
+{
+	curr_dir = dir;
+}
+
+int get_curr_dir()
+{
+	return curr_dir;
+}
+
+void set_curr_path(char* path)
+{
+	strcpy(curr_path,path);
+}
+
+void get_curr_path(char* new_path)
+{
+	strcpy(new_path,curr_path);
+}
+
 // Boot Sector (BS) & BPB (BIOS Parameter Block)
 typedef struct bootsect
 {
@@ -543,9 +563,11 @@ void fat12_ls()
 	if (curr_dir == FAT_ROOT_REGION_START)
 		for (int i = 0; i < FAT_NUM_ROOT_ENTRY; ++i)
 			fat12_show_file_entry(&root_dir.entry[i]);
-	else
+	else {
+		fat12_read_clusters((char*)&subdir,curr_dir);
 		for (int i = 0; i < FAT_NUM_DIR_ENTRY; ++i)
 			fat12_show_file_entry(&subdir.entry[i]);
+	}
 }
 
 bool fat12_cd(char* folder)

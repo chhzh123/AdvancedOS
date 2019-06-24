@@ -40,11 +40,23 @@ typedef struct terminal
 	int num;
 	int cursor;
 	char buf[VIDEO_SIZE];
+	char path[50];
+	int dir;
 
 } terminal_t;
 static terminal_t terminal_list[MAX_TERMINAL];
 
 terminal_t *curr_terminal, *tmp_terminal;
+
+int get_current_terminal()
+{
+	return curr_terminal->num;
+}
+
+void set_tmp_terminal(int i)
+{
+	tmp_terminal = &terminal_list[i];
+}
 
 void set_at_first_term()
 {
@@ -114,7 +126,12 @@ void put_prompt()
 
 void terminal_loop()
 {
+	bool flag = true;
 	while (1) {
+		if (flag == true)
+			flag = false;
+		else
+			put_prompt();
 		char str[MAX_BUF_LEN];
 		getline(str);
 		char* rest = str;
@@ -147,7 +164,6 @@ void terminal_loop()
 			exec_user_prg(rest);
 		} else
 			command_not_found(str);
-		put_prompt();
 	}
 }
 
@@ -159,31 +175,52 @@ void new_terminal()
 	put_prompt();
 }
 
+process* get_proc();
+void set_curr_dir(int dir);
+int get_curr_dir();
+void set_curr_path(char* path);
+void get_curr_path(char* new_path);
 void change_terminal(int new_ter)
 {
 	disable();
 	memcpy((void*)curr_terminal->buf,(void*)VIDEO_ADDRESS,VIDEO_SIZE);
 	curr_terminal->cursor = get_cursor();
-	curr_terminal = tmp_terminal = &terminal_list[new_ter];
+	get_curr_path(curr_terminal->path);
+	curr_terminal->dir = get_curr_dir();
+	if (get_proc() == NULL)
+		curr_terminal = tmp_terminal = &terminal_list[new_ter];
+	else
+		curr_terminal = &terminal_list[new_ter];
 	clear_screen();
 	memcpy((void*)VIDEO_ADDRESS,(void*)curr_terminal->buf,VIDEO_SIZE);
 	set_cursor(curr_terminal->cursor);
+	set_curr_path(curr_terminal->path);
+	set_curr_dir(curr_terminal->dir);
 	enable();
 }
 
 void terminal_init()
 {
+	disable();
 	for (int i = 0; i < MAX_TERMINAL; ++i){
 		curr_terminal = tmp_terminal = &terminal_list[i];
 		curr_terminal->num = i;
 		curr_terminal->cursor = 0;
+		curr_terminal->dir = get_curr_dir();
+		strcpy(curr_terminal->path,"/");
 		memset(curr_terminal->buf,0,sizeof(curr_terminal->buf));
 	}
-	curr_terminal = tmp_terminal = &terminal_list[0];
 	for (int i = 0; i < MAX_TERMINAL; ++i){
+		curr_terminal = tmp_terminal = &terminal_list[i];
 		new_terminal();
-		change_terminal((i+1)%MAX_TERMINAL);
+		memcpy((void*)curr_terminal->buf,(void*)VIDEO_ADDRESS,VIDEO_SIZE);
+		curr_terminal->cursor = get_cursor();
+		clear_screen();
 	}
+	curr_terminal = tmp_terminal = &terminal_list[0];
+	memcpy((void*)VIDEO_ADDRESS,(void*)curr_terminal->buf,VIDEO_SIZE);
+	set_cursor(curr_terminal->cursor);
+	enable();
 }
 
 #endif // TERMINAL_H
