@@ -42,11 +42,11 @@ void exec_user_prg(char* name_list)
 				addr_exec = 0x40000;
 			else if (strcmp(name,"prg4.com") == 0)
 				addr_exec = 0x50000;
-			if (!fat12_read_file(name,(char*)addr_exec)){
+			if (!fat12_read_file(name,(char*)addr_exec,NULL)){
 				put_error("No this user program!");
 				return;
 			}
-		} else if (strcmp(ext,"out") == 0 && fat12_read_file(name,(char*)bin_img)) {
+		} else if (strcmp(ext,"out") == 0 && fat12_read_file(name,(char*)bin_img,NULL)) {
 			addr_exec = parse_elf(ADDR_USER_START + 6 * PROC_SIZE);
 		} else {
 			put_error("No this user program!");

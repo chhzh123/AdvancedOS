@@ -63,7 +63,8 @@ The operating system named "CHZOS" enables **32-bit protected mode**.
 	- Currently use round-robin scheduling
 * File System
 	- FAT12 format
-	- Support basic file operations such as `cd`, `ls`, `rm`, `cp`, etc.
+	- Support basic file operations, such as `cd`, `ls`, `rm`, `cp`, etc.
+	- Support C file operations, such as `fopen`, `fclose`, `fgets`, `fputs`, etc.
 * User programs
 	- ELF file support
 	- Standard libraries support (I/O, string, etc.)

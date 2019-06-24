@@ -20,7 +20,7 @@ KERNEL = bootloader.bin kernel.bin
 HARDDISK = mydisk.hdd
 USRDIR = usr
 USR = prg1.com prg2.com prg3.com prg4.com box.com syscall.com
-USR += fork.out fork2.out bank.out fruit.out pro-con.out hello.out matmal.out
+USR += fork.out fork2.out bank.out fruit.out pro-con.out hello.out matmal.out file.out
 
 ifdef DEBUG
 CCFLAGS += -DDEBUG
@@ -51,19 +51,23 @@ kernel.o : kernel.c
 	$(CC) $(CCFLAGS) $< -o $(BUILD)/$@
 
 # user programs
-prg: buildprg
+prg:
 	-rm $(HARDDISK)
 	/sbin/mkfs.msdos -C $(HARDDISK) 1440
 	-mkdir disk
 	mount $(HARDDISK) disk
+	mkdir disk/myfolder
+	mkdir disk/myfolder/folder
+	mkdir disk/testfold
 	cp $(BUILD)/usr/*.com disk 
 	cp $(BUILD)/usr/*.out disk
 	umount disk
 	-rm -rf disk
 
-programs: $(foreach prg,$(USR),$(USRDIR)/$(prg)) $(DEBUGFILES)
+programs: buildprg $(foreach prg,$(USR),$(USRDIR)/$(prg)) $(DEBUGFILES)
 
 buildprg:
+	-mkdir $(BUILD)
 	-mkdir $(BUILD)/$(USRDIR)
 %.com : %.asm
 	$(AS) $< -o $(BUILD)/$@
@@ -93,6 +97,9 @@ usr/hello.out: usr/hello.c
 usr/matmal.out: usr/matmal.c
 	$(CC) $(CCFLAGS) $< -o $(BUILD)/matmal.o
 	$(LD) -m elf_i386 -Tusr/link.ld $(BUILD)/matmal.o -o $(BUILD)/$@
+usr/file.out: usr/file.c
+	$(CC) $(CCFLAGS) $< -o $(BUILD)/file.o
+	$(LD) -m elf_i386 -Tusr/link.ld $(BUILD)/file.o -o $(BUILD)/$@
 
 # debug
 %.s : %.c

@@ -55,10 +55,12 @@ show_static_string:
 [ global pit_handler ]
 [ global sys_interrupt_handler ]
 [ global sys_pthread_handler ]
+[ global sys_file_handler ]
 [ extern keyboard_handler_main ]
 [ extern pit_handler_main ]
 [ extern sys_interrupt_handler_main ]
 [ extern sys_pthread_handler_main ]
+[ extern sys_file_handler_main ]
 
 load_idt:
 	mov edx, [ esp + 4 ]
@@ -108,6 +110,29 @@ sys_pthread_handler:
 
 	push eax            ; Functional number
 	call sys_pthread_handler_main
+	pop ebx             ; Remember to pop out
+	; eax store the return value
+	sti
+	iretd
+
+sys_file_handler:
+	cli
+	pusha ; ax,cx,dx,bx,sp,bp,si,di
+	push ds
+	push es
+	push fs
+	push gs
+
+	call save_proc
+
+	pop gs
+	pop fs
+	pop es
+	pop ds
+	popa
+
+	push eax            ; Functional number
+	call sys_file_handler_main
 	pop ebx             ; Remember to pop out
 	; eax store the return value
 	sti

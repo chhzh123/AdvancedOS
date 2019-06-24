@@ -73,6 +73,10 @@ void terminal_loop()
 			char buf[1000];
 			strcpy(buf,"This is a test message!");
 			fat12_create_file((uintptr_t)buf,strlen(buf),"test.txt");
+		} else if (strcmp(str,"cp") == 0){
+			char* src = rest;
+			strsep(&rest," ");
+			fat12_cp(src,rest);
 		} else if (strcmp(str,"tick") == 0)
 			printf("%d\n",get_tick_count());
 		else if (strcmp(str,"read") == 0)

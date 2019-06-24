@@ -269,6 +269,29 @@ bool fat12_next_sector(uint32_t* next, uint32_t actual)
 		return true;
 }
 
+int fat12_read_bytes(char* buf, uint32_t cstart, uint32_t numBytes)
+{
+
+	int i;
+	uint32_t clust = cstart;
+	uint32_t n = numBytes % FAT_SECTOR_SIZE == 0
+				? numBytes / FAT_SECTOR_SIZE
+				: numBytes / FAT_SECTOR_SIZE + 1;
+	for (i = 0; true; ++i)
+	{
+#ifdef DEBUG
+		printf("Read cluster: %d\n", clust);
+#endif
+		uintptr_t addr = (uintptr_t) buf + i * FAT_SECTOR_SIZE;
+		// remember to recalculate cstart
+		read_sectors(addr, clust + FAT_DATA_REGION_START - 2, 1);
+		enable();
+		if (fat12_next_sector(&clust, clust) == false || i+1 > n)
+			break;
+	}
+	return i;
+}
+
 // start from the @cstart-th cluster, read the whole file to @buf
 // return the number of bytes read
 int fat12_read_clusters(char* buf, uint32_t cstart)
@@ -286,6 +309,29 @@ int fat12_read_clusters(char* buf, uint32_t cstart)
 		read_sectors(addr, clust + FAT_DATA_REGION_START - 2, 1);
 		enable();
 		if (fat12_next_sector(&clust, clust) == false)
+			break;
+	}
+	return i;
+}
+
+int fat12_write_bytes(char* buf, uint32_t cstart, uint32_t numBytes)
+{
+
+	int i;
+	uint32_t clust = cstart;
+	uint32_t n = numBytes % FAT_SECTOR_SIZE == 0
+				? numBytes / FAT_SECTOR_SIZE 
+				: numBytes / FAT_SECTOR_SIZE + 1;
+	for (i = 0; true; ++i)
+	{
+#ifdef DEBUG
+		printf("Write cluster: %d\n", clust);
+#endif
+		uintptr_t addr = (uintptr_t) buf + i * FAT_SECTOR_SIZE;
+		// remember to recalculate cstart
+		write_sectors(addr, clust + FAT_DATA_REGION_START - 2, 1);
+		enable();
+		if (fat12_next_sector(&clust, clust) == false || i+1 > n)
 			break;
 	}
 	return i;
@@ -325,7 +371,7 @@ void fat12_write_back_fat()
 	}
 
 	// Copy FAT to the disk
-	write_sectors((uintptr_t)&fat, FAT_ENTRY_START, bootsector.BPB_NumFATs);
+	// write_sectors((uintptr_t)&fat, FAT_ENTRY_START, bootsector.BPB_NumFATs);
 }
 
 void fat12_del_fat_entry(uint32_t cstart)
@@ -345,7 +391,7 @@ void fat12_del_fat_entry(uint32_t cstart)
 	fat12_write_back_fat();
 }
 
-bool fat12_read_file(char* filename, char* addr)
+bool fat12_read_file(char* filename, char* addr, int* size)
 {
 #ifdef DEBUG
 	printf("%s\n", filename);
@@ -356,6 +402,8 @@ bool fat12_read_file(char* filename, char* addr)
 		if (strcmp(filename,entry_name) != 0)
 			continue;
 		fat12_read_clusters(addr,root_dir.entry[i].startCluster);
+		if (size != NULL)
+			*size = root_dir.entry[i].fileLength;
 		return true;
 	}
 
@@ -521,17 +569,11 @@ bool fat12_rm(char* filename)
 		return false;
 	}
 	fe->name[0] = 0x000000E5;
-	if (curr_dir == FAT_ROOT_REGION_START)
-		write_sectors((uintptr_t)&root_dir,FAT_ROOT_REGION_START,FAT_ROOT_SIZE);
-	else
-		fat12_write_clusters((char*)&subdir,curr_dir);
+	// if (curr_dir == FAT_ROOT_REGION_START)
+	// 	write_sectors((uintptr_t)&root_dir,FAT_ROOT_REGION_START,FAT_ROOT_SIZE);
+	// else
+	// 	fat12_write_clusters((char*)&subdir,curr_dir);
 	fat12_del_fat_entry(fe->startCluster);
-	return true;
-}
-
-bool fat12_cp(char* src,char* dst)
-{
-	// TODO
 	return true;
 }
 
@@ -540,12 +582,13 @@ void fat12_create_file(uintptr_t addr, int size, char* name)
 	int numCluster = (size % FAT_SECTOR_SIZE == 0 ?
 		size / FAT_SECTOR_SIZE :
 		size / FAT_SECTOR_SIZE + 1);
+#ifdef DEBUG
 	printf("NumCluster:%d\n", numCluster);
+#endif
 
 	int cnt = 0, prevIndex = -1, cstart = 0;
 	for (int i = 2; i < FAT_NUM_ENTRY; ++i) // do NOT start from 0!
 		if (fat.entry[i] == 0){
-			printf("Fat:%d\n", i);
 			if (cnt == 0)
 				cstart = i;
 			if (prevIndex != -1)
@@ -560,10 +603,11 @@ void fat12_create_file(uintptr_t addr, int size, char* name)
 		}
 	// fat12_write_back_fat();
 
+#ifdef DEBUG
 	printf("%s\n", name);
+#endif
 	for (int i = 0; i < FAT_NUM_ROOT_ENTRY; ++i)
 		if (root_dir.entry[i].name[0] == 0x00000000){
-			printf("i:%d\n", i);
 			char tmp_name[20];
 			strcpy(tmp_name,name);
 			char* ext = tmp_name;
@@ -582,6 +626,17 @@ void fat12_create_file(uintptr_t addr, int size, char* name)
 			break;
 		}
 	// write_sectors((uintptr_t)&root_dir,FAT_ROOT_REGION_START,FAT_ROOT_SIZE);
+}
+
+bool fat12_cp(char* src, char* dst)
+{
+	char buf[512 * 30];
+	int size = 0;
+	if (fat12_read_file(src,buf,&size)){
+		fat12_create_file((uintptr_t)buf,size,dst);
+		return true;
+	}
+	return false;
 }
 
 #endif // FAT12_H

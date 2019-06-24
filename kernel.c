@@ -8,6 +8,7 @@
 #include "task.h"
 #include "semaphore.h"
 #include "fat12.h"
+#include "sysfile.h"
 #include "terminal.h"
 
 void initialize()
@@ -34,6 +35,12 @@ void initialize()
 	 */
 	fat12_init();
 	put_info("Initialized fat12");
+
+	/*
+	 * Virtual file system (VFS) initialization
+	 */
+	file_init();
+	put_info("Initialized VFS");
 	enable();
 }
 

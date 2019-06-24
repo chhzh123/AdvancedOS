@@ -53,6 +53,7 @@ void hal_initialize(){
 	// install my own interrupts
 	setvect_user (0x80, (unsigned long) sys_interrupt_handler);
 	setvect_user (0x81, (unsigned long) sys_pthread_handler);
+	setvect_user (0x82, (unsigned long) sys_file_handler);
 
 	put_info("Initialized IDT");
 
