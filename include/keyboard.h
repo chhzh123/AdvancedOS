@@ -18,11 +18,14 @@
 #define INVALID_KB_CHAR 0
 
 static char kb_char;
+static bool __ctrl = false;
+
+void change_terminal();
 
 void keyboard_handler_main(void)
 {
 	unsigned char status;
-	char keycode;
+	unsigned char scancode;
 
 	/* write EOI */
 	port_byte_out(0x20, 0x20);
@@ -30,12 +33,26 @@ void keyboard_handler_main(void)
 	status = port_byte_in(KEYBOARD_STATUS_PORT);
 	/* Lowest bit of status will be set if buffer is not empty */
 	if (status & 0x01) {
-		keycode = port_byte_in(KEYBOARD_DATA_PORT);
-		if (keycode < 0)
+		scancode = port_byte_in(KEYBOARD_DATA_PORT);
+		if (scancode < 0)
 			return;
-
-		char ascii = asccode[(unsigned char) keycode][0];
-		kb_char = ascii;
+		if (scancode & 0x80) {
+			if (scancode - 0x80 == KEY_CTRL)
+				__ctrl = false;
+		} else {
+			if (scancode == KEY_CTRL)
+				__ctrl = true;
+			else if (__ctrl && scancode == KEY_F1)
+				change_terminal(0);
+			else if (__ctrl && scancode == KEY_F2)
+				change_terminal(1);
+			else if (__ctrl && scancode == KEY_F3)
+				change_terminal(2);
+			else {
+				char ascii = asccode[(unsigned char) scancode][0];
+				kb_char = ascii;
+			}
+		}
 	}
 }
 

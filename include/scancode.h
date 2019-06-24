@@ -1,5 +1,6 @@
 // Source from http://www.cs.umd.edu/~hollings/cs412/s98/project/proj1/scancode
 // and https://github.com/arjun024/mkeykernel/blob/master/keyboard_map.h
+// https://github.com/jaytaph/CybOS/blob/master/source/kernel/keyboard.c
 
 #ifndef SCANCODE_H
 #define SCANCODE_H
@@ -24,8 +25,11 @@
 
 /* scancodes for function keys (for project 5) */
 
-#define F1 0x3B
-#define F2 0x3C
+#define KEY_CTRL 0x1D
+
+#define KEY_F1 0x3B
+#define KEY_F2 0x3C
+#define KEY_F3 0x3D
 
 /* ASCII codes to use for arrow keys: */
 

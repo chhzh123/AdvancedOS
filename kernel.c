@@ -47,5 +47,6 @@ void initialize()
 void main () {
 	initialize();
 	clear_screen();
-	terminal();
+	terminal_init();
+	terminal_loop();
 }

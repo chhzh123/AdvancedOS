@@ -17,7 +17,14 @@
 #include "syscall.h"
 #include "systhread.h"
 
+void set_at_first_term();
+
 void hal_initialize(){
+	/*
+	 * Terminal initialzation
+	 */
+	set_at_first_term();
+
 	printf("\n\n\n");
 	/*
 	 * Global Descriptor Table (GDT) and task state segment (TSS) initialization
