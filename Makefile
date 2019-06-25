@@ -51,7 +51,7 @@ kernel.o : kernel.c
 	$(CC) $(CCFLAGS) $< -o $(BUILD)/$@
 
 # user programs
-prg:
+disk:
 	-rm $(HARDDISK)
 	/sbin/mkfs.msdos -C $(HARDDISK) 1440
 	-mkdir disk
